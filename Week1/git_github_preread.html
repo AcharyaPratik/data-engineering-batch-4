@@ -1,0 +1,1213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Week 1 Pre-read — Git &amp; GitHub Basics</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --navy:      #0F1B2D;
+    --navy2:     #162236;
+    --navy3:     #1D2E47;
+    --teal:      #00C9A7;
+    --teal-dim:  #00956B;
+    --teal-bg:   rgba(0,201,167,0.08);
+    --teal-bd:   rgba(0,201,167,0.25);
+    --white:     #F0F4F8;
+    --white2:    #D8E2EE;
+    --slate:     #8899AA;
+    --slate2:    #607080;
+    --code-bg:   #111D2E;
+    --code-bd:   #243347;
+    --red:       #FF6B6B;
+    --red-bg:    rgba(255,107,107,0.08);
+    --red-bd:    rgba(255,107,107,0.25);
+    --amber:     #FFB347;
+    --amber-bg:  rgba(255,179,71,0.08);
+    --amber-bd:  rgba(255,179,71,0.25);
+    --green:     #4CAF82;
+    --green-bg:  rgba(76,175,130,0.08);
+    --green-bd:  rgba(76,175,130,0.25);
+    --sidebar-w: 240px;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  code, pre, .mono, kbd {
+    font-variant-ligatures: none;
+    font-feature-settings: "liga" 0, "calt" 0;
+  }
+
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background: var(--navy);
+    color: var(--white);
+    min-height: 100vh;
+    display: flex;
+    font-size: 15px;
+    line-height: 1.7;
+  }
+
+  /* ── Sidebar ── */
+  .sidebar {
+    width: var(--sidebar-w);
+    min-height: 100vh;
+    background: var(--navy2);
+    border-right: 1px solid var(--code-bd);
+    position: fixed;
+    top: 0; left: 0;
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    z-index: 100;
+    overflow-y: auto;
+  }
+
+  .sidebar-header {
+    padding: 24px 20px 20px;
+    border-bottom: 1px solid var(--code-bd);
+  }
+
+  .sidebar-eyebrow {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    color: var(--teal);
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .sidebar-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--white);
+    line-height: 1.4;
+  }
+
+  .sidebar-sub {
+    font-size: 11px;
+    color: var(--slate);
+    margin-top: 4px;
+  }
+
+  .sidebar-nav { padding: 12px 0; flex: 1; }
+
+  .nav-section-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    color: var(--slate2);
+    text-transform: uppercase;
+    padding: 10px 20px 4px;
+  }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 20px;
+    font-size: 13px;
+    color: var(--slate);
+    cursor: pointer;
+    transition: all 0.15s;
+    border-left: 2px solid transparent;
+    text-decoration: none;
+  }
+
+  .nav-item:hover { color: var(--white); background: var(--navy3); }
+
+  .nav-item.active {
+    color: var(--teal);
+    border-left-color: var(--teal);
+    background: var(--teal-bg);
+    font-weight: 500;
+  }
+
+  .nav-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--slate2);
+    flex-shrink: 0;
+    transition: background 0.15s;
+  }
+  .nav-item.active .nav-dot,
+  .nav-item.done .nav-dot { background: var(--teal); }
+  .nav-item.done { color: var(--slate); }
+
+  .progress-bar-wrap {
+    padding: 16px 20px;
+    border-top: 1px solid var(--code-bd);
+  }
+  .progress-label {
+    font-size: 11px;
+    color: var(--slate);
+    margin-bottom: 6px;
+    display: flex;
+    justify-content: space-between;
+  }
+  .progress-track {
+    height: 3px;
+    background: var(--navy3);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: var(--teal);
+    border-radius: 2px;
+    transition: width 0.4s ease;
+    width: 0%;
+  }
+
+  /* ── Main content ── */
+  .main {
+    margin-left: var(--sidebar-w);
+    flex: 1;
+    max-width: 800px;
+    padding: 48px 56px;
+  }
+
+  .section { display: none; }
+  .section.active { display: block; }
+
+  /* ── Section header ── */
+  .section-eyebrow {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    color: var(--teal);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  h1.section-heading {
+    font-size: 32px;
+    font-weight: 600;
+    color: var(--white);
+    line-height: 1.2;
+    margin-bottom: 14px;
+    letter-spacing: -0.02em;
+  }
+
+  .section-intro {
+    font-size: 16px;
+    color: var(--white2);
+    line-height: 1.75;
+    margin-bottom: 32px;
+    padding-bottom: 28px;
+    border-bottom: 1px solid var(--code-bd);
+  }
+
+  /* ── Prose ── */
+  h2.subsection {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--white);
+    margin: 32px 0 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  h2.subsection::before {
+    content: '';
+    display: block;
+    width: 3px;
+    height: 18px;
+    background: var(--teal);
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+
+  p { color: var(--white2); margin-bottom: 14px; }
+
+  strong { color: var(--white); font-weight: 500; }
+
+  /* ── Callout boxes ── */
+  .callout {
+    border-radius: 8px;
+    padding: 14px 18px;
+    margin: 20px 0;
+    font-size: 14px;
+    line-height: 1.6;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+  }
+  .callout-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+  .callout.tip  { background: var(--teal-bg); border: 1px solid var(--teal-bd); color: var(--white2); }
+  .callout.warn { background: var(--amber-bg); border: 1px solid var(--amber-bd); color: var(--white2); }
+  .callout.goal { background: var(--green-bg); border: 1px solid var(--green-bd); color: var(--white2); }
+  .callout.error{ background: var(--red-bg);   border: 1px solid var(--red-bd);   color: var(--white2); }
+  .callout strong { color: var(--white); }
+
+  /* ── Code block ── */
+  .code-wrap {
+    background: var(--code-bg);
+    border: 1px solid var(--code-bd);
+    border-radius: 10px;
+    margin: 18px 0;
+    overflow: hidden;
+  }
+
+  .code-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--code-bd);
+    background: var(--navy2);
+  }
+
+  .code-lang {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--teal);
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 0.05em;
+  }
+
+  .code-label {
+    font-size: 11px;
+    color: var(--slate);
+  }
+
+  pre {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    line-height: 1.7;
+    color: var(--white);
+    padding: 18px 20px;
+    overflow-x: auto;
+    white-space: pre;
+  }
+
+  /* syntax highlight helpers */
+  .kw  { color: #FF79C6; }   /* keywords */
+  .fn  { color: #50FA7B; }   /* commands/subcommands */
+  .st  { color: #F1FA8C; }   /* strings / urls / branch names */
+  .cm  { color: #6272A4; }   /* comments */
+  .nm  { color: #BD93F9; }   /* numbers/names */
+  .op  { color: #FF79C6; }   /* operators */
+  .bi  { color: #8BE9FD; }   /* builtins / git itself */
+
+  /* ── Before/After toggle ── */
+  .compare-wrap { margin: 24px 0; }
+
+  .compare-tabs {
+    display: flex;
+    border-bottom: 1px solid var(--code-bd);
+    margin-bottom: 0;
+  }
+
+  .compare-tab {
+    padding: 9px 20px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    color: var(--slate);
+    transition: all 0.15s;
+    margin-bottom: -1px;
+    background: none;
+    border-top: none;
+    border-left: none;
+    border-right: none;
+  }
+
+  .compare-tab:hover { color: var(--white2); }
+  .compare-tab.active-before { color: var(--red); border-bottom-color: var(--red); }
+  .compare-tab.active-after  { color: var(--teal); border-bottom-color: var(--teal); }
+
+  .compare-panel { display: none; }
+  .compare-panel.visible { display: block; }
+
+  /* ── Key term pill ── */
+  .term {
+    display: inline-block;
+    background: var(--teal-bg);
+    border: 1px solid var(--teal-bd);
+    color: var(--teal);
+    font-size: 12px;
+    font-weight: 500;
+    font-family: 'JetBrains Mono', monospace;
+    padding: 1px 8px;
+    border-radius: 4px;
+    margin: 0 1px;
+  }
+
+  /* ── Nav buttons ── */
+  .nav-buttons {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 52px;
+    padding-top: 28px;
+    border-top: 1px solid var(--code-bd);
+  }
+
+  .nav-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+    border: 1px solid var(--code-bd);
+    background: var(--navy2);
+    color: var(--white2);
+    text-decoration: none;
+  }
+
+  .nav-btn:hover { border-color: var(--teal); color: var(--teal); }
+  .nav-btn:disabled { opacity: 0.3; pointer-events: none; }
+  .nav-btn.primary { background: var(--teal-bg); border-color: var(--teal); color: var(--teal); }
+
+  /* ── Check list ── */
+  .check-list { list-style: none; margin: 12px 0 20px; }
+  .check-list li {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    padding: 6px 0;
+    font-size: 14px;
+    color: var(--white2);
+    border-bottom: 1px solid var(--code-bd);
+  }
+  .check-list li:last-child { border-bottom: none; }
+  .check-list li::before {
+    content: '→';
+    color: var(--teal);
+    flex-shrink: 0;
+    font-weight: 600;
+    margin-top: 1px;
+  }
+
+  /* ── Concept card grid ── */
+  .concept-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin: 20px 0;
+  }
+
+  .concept-card {
+    background: var(--navy2);
+    border: 1px solid var(--code-bd);
+    border-radius: 10px;
+    padding: 16px 18px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .concept-card:hover {
+    border-color: var(--teal);
+    background: var(--navy3);
+  }
+
+  .concept-card-num {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--teal);
+    letter-spacing: 0.1em;
+    margin-bottom: 6px;
+  }
+
+  .concept-card-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--white);
+    margin-bottom: 4px;
+  }
+
+  .concept-card-sub {
+    font-size: 12px;
+    color: var(--slate);
+    line-height: 1.5;
+  }
+
+  /* ── Table ── */
+  table { width: 100%; border-collapse: collapse; margin: 18px 0; font-size: 13.5px; }
+  thead tr { border-bottom: 1px solid var(--teal-bd); }
+  th { padding: 10px 14px; text-align: left; font-size: 11px; font-weight: 600; color: var(--teal); letter-spacing: 0.08em; text-transform: uppercase; }
+  td { padding: 10px 14px; border-bottom: 1px solid var(--code-bd); color: var(--white2); vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  td code, th code { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--teal); }
+
+  /* ── inline code ── */
+  code { font-family: 'JetBrains Mono', monospace; font-size: 12.5px; color: var(--teal); background: var(--teal-bg); padding: 1px 6px; border-radius: 4px; }
+
+  /* ── The final script banner ── */
+  .script-banner {
+    background: linear-gradient(135deg, var(--navy3) 0%, #0D2535 100%);
+    border: 1px solid var(--teal-bd);
+    border-radius: 12px;
+    padding: 24px 28px;
+    margin: 28px 0;
+  }
+  .script-banner-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--white);
+    margin-bottom: 8px;
+  }
+  .script-banner-sub {
+    font-size: 14px;
+    color: var(--slate);
+    margin-bottom: 0;
+  }
+
+  /* ── Flow diagram ── */
+  .flow {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 22px 0;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12.5px;
+  }
+  .flow-step {
+    background: var(--navy2);
+    border: 1px solid var(--code-bd);
+    border-radius: 8px;
+    padding: 8px 14px;
+    color: var(--white2);
+  }
+  .flow-step.you { border-color: var(--teal-bd); color: var(--teal); background: var(--teal-bg); }
+  .flow-arrow { color: var(--slate2); }
+</style>
+</head>
+<body>
+
+<!-- ── Sidebar ── -->
+<nav class="sidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-eyebrow">Week 1 · Pre-read</div>
+    <div class="sidebar-title">Git &amp; GitHub before Class</div>
+    <div class="sidebar-sub">7 concepts · ~35 min</div>
+  </div>
+
+  <div class="sidebar-nav">
+    <div class="nav-section-label">Start here</div>
+    <a class="nav-item active" onclick="goTo(0)" href="#">
+      <span class="nav-dot"></span>Overview
+    </a>
+
+    <div class="nav-section-label">Concepts</div>
+    <a class="nav-item" onclick="goTo(1)" href="#">
+      <span class="nav-dot"></span>1 · Git vs GitHub
+    </a>
+    <a class="nav-item" onclick="goTo(2)" href="#">
+      <span class="nav-dot"></span>2 · Forking the repo
+    </a>
+    <a class="nav-item" onclick="goTo(3)" href="#">
+      <span class="nav-dot"></span>3 · Clone &amp; remotes
+    </a>
+    <a class="nav-item" onclick="goTo(4)" href="#">
+      <span class="nav-dot"></span>4 · Branch &amp; commit
+    </a>
+    <a class="nav-item" onclick="goTo(5)" href="#">
+      <span class="nav-dot"></span>5 · Push &amp; open a PR
+    </a>
+    <a class="nav-item" onclick="goTo(6)" href="#">
+      <span class="nav-dot"></span>6 · Sync with upstream
+    </a>
+    <a class="nav-item" onclick="goTo(7)" href="#">
+      <span class="nav-dot"></span>7 · Full cheat sheet
+    </a>
+  </div>
+
+  <div class="progress-bar-wrap">
+    <div class="progress-label">
+      <span>Progress</span>
+      <span id="progress-text">0 / 8</span>
+    </div>
+    <div class="progress-track">
+      <div class="progress-fill" id="progress-fill"></div>
+    </div>
+  </div>
+</nav>
+
+<!-- ── Main ── -->
+<main class="main">
+
+  <!-- ── 0: Overview ── -->
+  <section class="section active" id="sec-0">
+    <div class="section-eyebrow">Before you start</div>
+    <h1 class="section-heading">One repo. Your own copy.<br>A workflow you'll repeat all course.</h1>
+    <p class="section-intro">
+      Every assignment in this course follows the same shape: you fork this repository into your
+      own GitHub account, do your work on a branch, and open a pull request on <strong>your own
+      fork</strong> so it can be reviewed. After every class, new material lands in the original
+      repository — you'll pull it into your fork so you never fall behind. This pre-read walks
+      through that full loop once, so it's muscle memory before Week 1 begins.
+    </p>
+
+    <div class="callout goal">
+      <span class="callout-icon">🎯</span>
+      <div><strong>By the end of this pre-read</strong> you will have your own fork set up locally, with both remotes configured, and you'll know the exact commands to submit an assignment and sync new class material — covered in the cheat sheet on page 7.</div>
+    </div>
+
+    <h2 class="subsection">The workflow you're building toward</h2>
+    <p>This is the loop you'll run for every assignment, start to finish.</p>
+
+    <div class="flow">
+      <span class="flow-step you">Fork</span><span class="flow-arrow">→</span>
+      <span class="flow-step you">Clone</span><span class="flow-arrow">→</span>
+      <span class="flow-step you">Branch</span><span class="flow-arrow">→</span>
+      <span class="flow-step you">Commit</span><span class="flow-arrow">→</span>
+      <span class="flow-step you">Push</span><span class="flow-arrow">→</span>
+      <span class="flow-step you">Open PR (on your fork)</span>
+    </div>
+    <div class="flow">
+      <span class="flow-step">after every class</span><span class="flow-arrow">→</span>
+      <span class="flow-step you">Sync fork with upstream</span><span class="flow-arrow">→</span>
+      <span class="flow-step">start next assignment</span>
+    </div>
+
+    <div class="script-banner">
+      <div class="script-banner-title">data-engineering-batch-4</div>
+      <div class="script-banner-sub">One shared repository holds all class material. Each student works from their own fork — assignments are submitted as pull requests inside that fork, and new lessons are pulled in from the original repo (called "upstream") after every class.</div>
+    </div>
+
+    <h2 class="subsection">What's covered</h2>
+    <div class="concept-grid">
+      <div class="concept-card" onclick="goTo(1)">
+        <div class="concept-card-num">01</div>
+        <div class="concept-card-title">Git vs GitHub</div>
+        <div class="concept-card-sub">The tool vs the website. Key vocabulary you'll use all course.</div>
+      </div>
+      <div class="concept-card" onclick="goTo(2)">
+        <div class="concept-card-num">02</div>
+        <div class="concept-card-title">Forking the repo</div>
+        <div class="concept-card-sub">Get your own copy of the course repository on GitHub.</div>
+      </div>
+      <div class="concept-card" onclick="goTo(3)">
+        <div class="concept-card-num">03</div>
+        <div class="concept-card-title">Clone &amp; remotes</div>
+        <div class="concept-card-sub">Bring your fork onto your laptop. Set up origin and upstream.</div>
+      </div>
+      <div class="concept-card" onclick="goTo(4)">
+        <div class="concept-card-num">04</div>
+        <div class="concept-card-title">Branch &amp; commit</div>
+        <div class="concept-card-sub">One branch per assignment. Never work directly on main.</div>
+      </div>
+      <div class="concept-card" onclick="goTo(5)">
+        <div class="concept-card-num">05</div>
+        <div class="concept-card-title">Push &amp; open a PR</div>
+        <div class="concept-card-sub">Submit your assignment as a pull request on your own fork.</div>
+      </div>
+      <div class="concept-card" onclick="goTo(6)">
+        <div class="concept-card-num">06</div>
+        <div class="concept-card-title">Sync with upstream</div>
+        <div class="concept-card-sub">Pull new class material into your fork after every session.</div>
+      </div>
+    </div>
+
+    <div class="callout tip">
+      <span class="callout-icon">💡</span>
+      <div><strong>How to use this pre-read:</strong> Each page has a <em>Before / After</em> toggle. The Before tab shows a mistake that trips up almost every student in week one. The After tab shows the correct pattern — read both.</div>
+    </div>
+
+    <div class="nav-buttons">
+      <button class="nav-btn" disabled>← Previous</button>
+      <button class="nav-btn primary" onclick="goTo(1)">Start: Git vs GitHub →</button>
+    </div>
+  </section>
+
+
+  <!-- ── 1: Git vs GitHub ── -->
+  <section class="section" id="sec-1">
+    <div class="section-eyebrow">Concept 1 of 7</div>
+    <h1 class="section-heading">Git vs GitHub</h1>
+    <p class="section-intro">
+      These two names get used interchangeably but they are different things. Mixing them up is
+      the fastest way to get lost in your first week, so it's worth being precise before you
+      touch a single command.
+    </p>
+
+    <h2 class="subsection">Git — the tool on your laptop</h2>
+    <p><strong>Git</strong> is version control software that runs locally. It tracks every change you make to a folder of files over time, letting you save checkpoints (<span class="term">commits</span>) and go back to any of them. Git works entirely offline — it doesn't need the internet or an account.</p>
+
+    <h2 class="subsection">GitHub — the website that hosts your repo</h2>
+    <p><strong>GitHub</strong> is a website (and company) that hosts Git repositories in the cloud. It adds things Git itself doesn't have: a place to store your code online, a UI for browsing history, and collaboration features like <span class="term">forks</span> and <span class="term">pull requests</span>. GitLab and Bitbucket are competitors that do the same job — this course uses GitHub.</p>
+
+    <div class="callout tip">
+      <span class="callout-icon">💡</span>
+      <div><strong>One-line summary:</strong> Git is the engine, GitHub is where you park the car online and let other people look at it.</div>
+    </div>
+
+    <h2 class="subsection">Vocabulary you'll use every day</h2>
+    <table>
+      <thead><tr><th>Term</th><th>What it means</th></tr></thead>
+      <tbody>
+        <tr><td><code>repository</code> (repo)</td><td>A project folder tracked by Git — its full history of changes.</td></tr>
+        <tr><td><code>commit</code></td><td>A saved snapshot of your changes, with a message describing what changed.</td></tr>
+        <tr><td><code>branch</code></td><td>An independent line of work — lets you build a feature without touching <code>main</code>.</td></tr>
+        <tr><td><code>remote</code></td><td>A version of the repo hosted elsewhere (e.g. on GitHub) that your local repo talks to.</td></tr>
+        <tr><td><code>clone</code></td><td>Downloading a full copy of a remote repo, with its whole history, onto your laptop.</td></tr>
+        <tr><td><code>fork</code></td><td>A GitHub-only concept — your own personal copy of someone else's repo, under your account.</td></tr>
+        <tr><td><code>pull request</code> (PR)</td><td>A request to merge changes from one branch into another, opened for review.</td></tr>
+      </tbody>
+    </table>
+
+    <h2 class="subsection">The commands you already half-know</h2>
+    <div class="code-wrap">
+      <div class="code-header"><span class="code-lang">bash</span><span class="code-label">the everyday loop</span></div>
+      <pre><span class="cm"># Check what's changed since your last commit</span>
+<span class="bi">git</span> <span class="fn">status</span>
+
+<span class="cm"># Stage a file — mark it ready to be committed</span>
+<span class="bi">git</span> <span class="fn">add</span> day1_class_query.sql
+
+<span class="cm"># Save a snapshot with a message</span>
+<span class="bi">git</span> <span class="fn">commit</span> -m <span class="st">"Add day 1 class query"</span>
+
+<span class="cm"># See the history of commits</span>
+<span class="bi">git</span> <span class="fn">log</span> --oneline</pre>
+    </div>
+
+    <div class="callout warn">
+      <span class="callout-icon">⚠️</span>
+      <div><strong>Watch out:</strong> <code>git commit</code> only saves to your local repo. Nothing is visible on GitHub — or to your instructor — until you <code>git push</code>. Concept 5 covers this.</div>
+    </div>
+
+    <div class="nav-buttons">
+      <button class="nav-btn" onclick="goTo(0)">← Overview</button>
+      <button class="nav-btn primary" onclick="goTo(2)">Forking the repo →</button>
+    </div>
+  </section>
+
+
+  <!-- ── 2: Forking ── -->
+  <section class="section" id="sec-2">
+    <div class="section-eyebrow">Concept 2 of 7</div>
+    <h1 class="section-heading">Forking the repo</h1>
+    <p class="section-intro">
+      You do not have write access to the course repository — and you shouldn't. Instead, every
+      student <strong>forks</strong> it: GitHub creates a full copy under your own account that
+      you fully own and can push to freely, while staying linked to the original so you can pull
+      in new material later.
+    </p>
+
+    <h2 class="subsection">How to fork</h2>
+    <ul class="check-list">
+      <li>Open the course repository on GitHub: <code>github.com/bishalrijal/data-engineering-batch-4</code></li>
+      <li>Click the <strong>Fork</strong> button in the top-right corner</li>
+      <li>Confirm your account as the owner and click <strong>Create fork</strong></li>
+      <li>GitHub redirects you to your own copy: <code>github.com/&lt;your-username&gt;/data-engineering-batch-4</code></li>
+    </ul>
+
+    <div class="callout tip">
+      <span class="callout-icon">💡</span>
+      <div><strong>Do this once per course</strong>, not once per assignment. Your fork sticks around for the whole term — you'll keep syncing new material into it week after week, covered in Concept 6.</div>
+    </div>
+
+    <h2 class="subsection">Before / After — why you can't just clone the original</h2>
+    <div class="compare-wrap">
+      <div class="compare-tabs">
+        <button class="compare-tab active-before" onclick="toggle(this,'before','cmp-fork')">❌ Before — cloning the original directly</button>
+        <button class="compare-tab" onclick="toggle(this,'after','cmp-fork')">✓ After — fork first, then clone</button>
+      </div>
+      <div id="cmp-fork-before" class="compare-panel visible">
+        <div class="code-wrap" style="margin-top:0;border-top-left-radius:0;border-top-right-radius:0;">
+          <div class="code-header"><span class="code-lang">bash</span><span class="code-label" style="color:var(--red)">problem: you don't own this repo</span></div>
+          <pre><span class="bi">git</span> <span class="fn">clone</span> <span class="st">https://github.com/bishalrijal/data-engineering-batch-4.git</span>
+<span class="bi">cd</span> data-engineering-batch-4
+<span class="cm"># ... you do your assignment, then:</span>
+<span class="bi">git</span> <span class="fn">push</span> origin main
+
+<span class="cm"># remote: Permission to bishalrijal/data-engineering-batch-4.git denied</span>
+<span class="cm"># fatal: unable to access — 403</span>
+<span class="cm">#</span>
+<span class="cm"># You cloned the ORIGINAL repo. You have read access, not write access.</span>
+<span class="cm"># There is nowhere for your commits to go.</span></pre>
+        </div>
+      </div>
+      <div id="cmp-fork-after" class="compare-panel">
+        <div class="code-wrap" style="margin-top:0;border-top-left-radius:0;border-top-right-radius:0;">
+          <div class="code-header"><span class="code-lang">bash</span><span class="code-label" style="color:var(--teal)">solution: fork on GitHub, then clone YOUR fork</span></div>
+          <pre><span class="cm"># After clicking "Fork" on github.com/bishalrijal/data-engineering-batch-4</span>
+<span class="bi">git</span> <span class="fn">clone</span> <span class="st">https://github.com/YOUR-USERNAME/data-engineering-batch-4.git</span>
+<span class="bi">cd</span> data-engineering-batch-4
+<span class="cm"># ... you do your assignment, then:</span>
+<span class="bi">git</span> <span class="fn">push</span> origin main
+<span class="cm"># Works — this is your own repo, you have full write access.</span></pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout error">
+      <span class="callout-icon">🔴</span>
+      <div><strong>The #1 week-one mistake:</strong> cloning <code>bishalrijal/data-engineering-batch-4</code> directly instead of your own fork. If your terminal ever shows <code>bishalrijal</code> instead of your own username in a clone URL, stop and re-check.</div>
+    </div>
+
+    <div class="nav-buttons">
+      <button class="nav-btn" onclick="goTo(1)">← Git vs GitHub</button>
+      <button class="nav-btn primary" onclick="goTo(3)">Clone &amp; remotes →</button>
+    </div>
+  </section>
+
+
+  <!-- ── 3: Clone & Remotes ── -->
+  <section class="section" id="sec-3">
+    <div class="section-eyebrow">Concept 3 of 7</div>
+    <h1 class="section-heading">Clone &amp; remotes</h1>
+    <p class="section-intro">
+      Forking creates your copy on GitHub, but you need it on your own machine to actually write
+      code. Cloning downloads it — and sets up a <strong>remote</strong> pointing back to it.
+      You'll then add a second remote pointing to the original course repo, so you can pull in
+      new lessons all term.
+    </p>
+
+    <h2 class="subsection">Clone your fork</h2>
+    <div class="code-wrap">
+      <div class="code-header"><span class="code-lang">bash</span><span class="code-label">downloads your fork onto your laptop</span></div>
+      <pre><span class="bi">git</span> <span class="fn">clone</span> <span class="st">https://github.com/YOUR-USERNAME/data-engineering-batch-4.git</span>
+<span class="bi">cd</span> data-engineering-batch-4
+
+<span class="cm"># Git automatically named the remote for YOUR fork "origin"</span>
+<span class="bi">git</span> <span class="fn">remote</span> -v
+<span class="cm"># origin  https://github.com/YOUR-USERNAME/data-engineering-batch-4.git (fetch)</span>
+<span class="cm"># origin  https://github.com/YOUR-USERNAME/data-engineering-batch-4.git (push)</span></pre>
+    </div>
+
+    <h2 class="subsection">Add the original repo as "upstream"</h2>
+    <p>Right now your local repo only knows about your fork. It has no way to hear about new material added to the original course repo. Adding a second remote — conventionally named <code>upstream</code> — fixes that.</p>
+
+    <div class="code-wrap">
+      <div class="code-header"><span class="code-lang">bash</span><span class="code-label">point to the instructor's original repo</span></div>
+      <pre><span class="bi">git</span> <span class="fn">remote</span> add upstream <span class="st">https://github.com/bishalrijal/data-engineering-batch-4.git</span>
+
+<span class="cm"># Verify — you should now see two remotes</span>
+<span class="bi">git</span> <span class="fn">remote</span> -v
+<span class="cm"># origin    https://github.com/YOUR-USERNAME/data-engineering-batch-4.git (fetch)</span>
+<span class="cm"># origin    https://github.com/YOUR-USERNAME/data-engineering-batch-4.git (push)</span>
+<span class="cm"># upstream  https://github.com/bishalrijal/data-engineering-batch-4.git (fetch)</span>
+<span class="cm"># upstream  https://github.com/bishalrijal/data-engineering-batch-4.git (push)</span></pre>
+    </div>
+
+    <table>
+      <thead><tr><th>Remote</th><th>Points to</th><th>You push to it?</th><th>You pull from it?</th></tr></thead>
+      <tbody>
+        <tr><td><code>origin</code></td><td>Your fork</td><td>Yes — every assignment</td><td>Rarely</td></tr>
+        <tr><td><code>upstream</code></td><td>Instructor's original repo</td><td>Never</td><td>Yes — after every class</td></tr>
+      </tbody>
+    </table>
+
+    <h2 class="subsection">Before / After — one remote vs two</h2>
+    <div class="compare-wrap">
+      <div class="compare-tabs">
+        <button class="compare-tab active-before" onclick="toggle(this,'before','cmp-remote')">❌ Before — only origin configured</button>
+        <button class="compare-tab" onclick="toggle(this,'after','cmp-remote')">✓ After — origin + upstream</button>
+      </div>
+      <div id="cmp-remote-before" class="compare-panel visible">
+        <div class="code-wrap" style="margin-top:0;border-top-left-radius:0;border-top-right-radius:0;">
+          <div class="code-header"><span class="code-lang">bash</span><span class="code-label" style="color:var(--red)">problem: no link back to the course repo</span></div>
+          <pre><span class="bi">git</span> <span class="fn">remote</span> -v
+<span class="cm"># origin  https://github.com/YOUR-USERNAME/data-engineering-batch-4.git (fetch/push)</span>
+<span class="cm">#</span>
+<span class="cm"># Week 3 material gets pushed to the instructor's repo.</span>
+<span class="cm"># Your fork has no idea it exists — there is no "upstream" to pull from.</span>
+<span class="cm"># You'd have to manually download and copy files in. Don't do this.</span></pre>
+        </div>
+      </div>
+      <div id="cmp-remote-after" class="compare-panel">
+        <div class="code-wrap" style="margin-top:0;border-top-left-radius:0;border-top-right-radius:0;">
+          <div class="code-header"><span class="code-lang">bash</span><span class="code-label" style="color:var(--teal)">solution: upstream lets you fetch new material directly</span></div>
+          <pre><span class="bi">git</span> <span class="fn">fetch</span> upstream
+<span class="cm"># remote: Enumerating objects...</span>
+<span class="cm"># From github.com:bishalrijal/data-engineering-batch-4</span>
+<span class="cm">#  * [new branch]  main -> upstream/main</span>
+<span class="cm">#</span>
+<span class="cm"># Week 3 material is now downloaded locally — ready to merge into your fork.</span>
+<span class="cm"># Full sync steps are in Concept 6.</span></pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="nav-buttons">
+      <button class="nav-btn" onclick="goTo(2)">← Forking the repo</button>
+      <button class="nav-btn primary" onclick="goTo(4)">Branch &amp; commit →</button>
+    </div>
+  </section>
+
+
+  <!-- ── 4: Branch & Commit ── -->
+  <section class="section" id="sec-4">
+    <div class="section-eyebrow">Concept 4 of 7</div>
+    <h1 class="section-heading">Branch &amp; commit</h1>
+    <p class="section-intro">
+      Every assignment starts the same way: a fresh branch off <code>main</code>. This keeps your
+      <code>main</code> branch clean — which matters, because <code>main</code> is exactly what
+      you'll sync against the instructor's repo after every class. Work sitting directly on
+      <code>main</code> makes that sync messy.
+    </p>
+
+    <h2 class="subsection">Create a branch for the assignment</h2>
+    <div class="code-wrap">
+      <div class="code-header"><span class="code-lang">bash</span><span class="code-label">one branch per assignment</span></div>
+      <pre><span class="cm"># Make sure you're starting from an up-to-date main</span>
+<span class="bi">git</span> <span class="fn">checkout</span> main
+
+<span class="cm"># Create and switch to a new branch — name it after the assignment</span>
+<span class="bi">git</span> <span class="fn">checkout</span> -b week1-assignment
+
+<span class="cm"># Confirm which branch you're on</span>
+<span class="bi">git</span> <span class="fn">branch</span>
+<span class="cm">#   main</span>
+<span class="cm"># * week1-assignment</span></pre>
+    </div>
+
+    <h2 class="subsection">Commit your work</h2>
+    <div class="code-wrap">
+      <div class="code-header"><span class="code-lang">bash</span><span class="code-label">stage and save your changes</span></div>
+      <pre><span class="cm"># See what changed</span>
+<span class="bi">git</span> <span class="fn">status</span>
+
+<span class="cm"># Stage the files for this assignment</span>
+<span class="bi">git</span> <span class="fn">add</span> Week1/my_solution.sql
+
+<span class="cm"># Commit with a message describing what you did — not "update"</span>
+<span class="bi">git</span> <span class="fn">commit</span> -m <span class="st">"Add week 1 SQL solution: top drivers by fare"</span>
+
+<span class="cm"># Repeat add/commit as you make progress — small, meaningful commits</span></pre>
+    </div>
+
+    <h2 class="subsection">Before / After — working on main vs a branch</h2>
+    <div class="compare-wrap">
+      <div class="compare-tabs">
+        <button class="compare-tab active-before" onclick="toggle(this,'before','cmp-branch')">❌ Before — committing on main</button>
+        <button class="compare-tab" onclick="toggle(this,'after','cmp-branch')">✓ After — dedicated branch</button>
+      </div>
+      <div id="cmp-branch-before" class="compare-panel visible">
+        <div class="code-wrap" style="margin-top:0;border-top-left-radius:0;border-top-right-radius:0;">
+          <div class="code-header"><span class="code-lang">bash</span><span class="code-label" style="color:var(--red)">problem: main now diverges from upstream</span></div>
+          <pre><span class="bi">git</span> <span class="fn">checkout</span> main
+<span class="cm"># ... edit files, commit directly here ...</span>
+<span class="bi">git</span> <span class="fn">commit</span> -m <span class="st">"assignment"</span>
+
+<span class="cm"># Next class, you try to sync new material:</span>
+<span class="bi">git</span> <span class="fn">merge</span> upstream/main
+<span class="cm"># CONFLICT (content): Merge conflict in Week1/notes.md</span>
+<span class="cm">#</span>
+<span class="cm"># Your assignment commits and the instructor's new files are now tangled</span>
+<span class="cm"># together on the same branch. Every future sync repeats this pain.</span></pre>
+        </div>
+      </div>
+      <div id="cmp-branch-after" class="compare-panel">
+        <div class="code-wrap" style="margin-top:0;border-top-left-radius:0;border-top-right-radius:0;">
+          <div class="code-header"><span class="code-lang">bash</span><span class="code-label" style="color:var(--teal)">solution: main stays clean, assignments live on branches</span></div>
+          <pre><span class="bi">git</span> <span class="fn">checkout</span> -b week1-assignment
+<span class="cm"># ... edit files, commit here instead ...</span>
+<span class="bi">git</span> <span class="fn">commit</span> -m <span class="st">"Add week 1 SQL solution"</span>
+
+<span class="cm"># main never received any assignment commits — it's identical to</span>
+<span class="cm"># upstream/main. Syncing next class is a clean fast-forward, no conflicts.</span></pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout tip">
+      <span class="callout-icon">💡</span>
+      <div><strong>Rule of thumb:</strong> the only thing that ever touches your <code>main</code> branch is a sync from <code>upstream</code>. Every assignment gets its own branch, named after the assignment.</div>
+    </div>
+
+    <div class="nav-buttons">
+      <button class="nav-btn" onclick="goTo(3)">← Clone &amp; remotes</button>
+      <button class="nav-btn primary" onclick="goTo(5)">Push &amp; open a PR →</button>
+    </div>
+  </section>
+
+
+  <!-- ── 5: Push & PR ── -->
+  <section class="section" id="sec-5">
+    <div class="section-eyebrow">Concept 5 of 7</div>
+    <h1 class="section-heading">Push &amp; open a pull request</h1>
+    <p class="section-intro">
+      Commits made so far only exist on your laptop. <code>git push</code> uploads your branch to
+      your fork on GitHub. From there, you open a <strong>pull request</strong> — but the base
+      and head both stay inside <em>your own fork</em>. You are not sending anything to the
+      instructor's repository.
+    </p>
+
+    <h2 class="subsection">Push your branch to your fork</h2>
+    <div class="code-wrap">
+      <div class="code-header"><span class="code-lang">bash</span><span class="code-label">uploads to origin — your fork</span></div>
+      <pre><span class="cm"># Push the branch, and tell git to remember this upstream tracking link</span>
+<span class="bi">git</span> <span class="fn">push</span> -u origin week1-assignment
+
+<span class="cm"># remote: Create a pull request for 'week1-assignment' on GitHub by visiting:</span>
+<span class="cm"># remote:   https://github.com/YOUR-USERNAME/data-engineering-batch-4/pull/new/week1-assignment</span></pre>
+    </div>
+
+    <h2 class="subsection">Open the PR — on your own fork</h2>
+    <ul class="check-list">
+      <li>Go to your fork on GitHub: <code>github.com/YOUR-USERNAME/data-engineering-batch-4</code></li>
+      <li>Click <strong>Compare &amp; pull request</strong> for your branch</li>
+      <li>Check the base repository dropdown — it must read <strong>YOUR-USERNAME/data-engineering-batch-4</strong>, base: <code>main</code></li>
+      <li>Head repository is <strong>YOUR-USERNAME/data-engineering-batch-4</strong>, compare: <code>week1-assignment</code></li>
+      <li>Add a short title and description, then click <strong>Create pull request</strong></li>
+      <li>Share the PR link with your instructor for review</li>
+    </ul>
+
+    <div class="callout error">
+      <span class="callout-icon">🔴</span>
+      <div><strong>The mistake that trips people up here:</strong> GitHub sometimes defaults the base repository to <code>bishalrijal/data-engineering-batch-4</code> instead of your own fork, because that's where you forked from. Always check the base dropdown before clicking create — your assignment PR should merge into <em>your</em> <code>main</code>, not the instructor's.</div>
+    </div>
+
+    <h2 class="subsection">Before / After — PR target</h2>
+    <div class="compare-wrap">
+      <div class="compare-tabs">
+        <button class="compare-tab active-before" onclick="toggle(this,'before','cmp-pr')">❌ Before — PR opened against upstream</button>
+        <button class="compare-tab" onclick="toggle(this,'after','cmp-pr')">✓ After — PR opened against your own fork</button>
+      </div>
+      <div id="cmp-pr-before" class="compare-panel visible">
+        <div class="code-wrap" style="margin-top:0;border-top-left-radius:0;border-top-right-radius:0;">
+          <div class="code-header"><span class="code-lang">text</span><span class="code-label" style="color:var(--red)">problem: base repo left on the default</span></div>
+          <pre>base repository:  bishalrijal/data-engineering-batch-4   base: main
+head repository:  YOUR-USERNAME/data-engineering-batch-4  compare: week1-assignment
+
+<span class="cm"># This PR now asks to merge your assignment into the INSTRUCTOR'S repo.</span>
+<span class="cm"># The instructor doesn't want 30 students merging directly into course</span>
+<span class="cm"># material, and you don't have permission to merge it anyway — it just</span>
+<span class="cm"># sits open and confuses everyone.</span></pre>
+        </div>
+      </div>
+      <div id="cmp-pr-after" class="compare-panel">
+        <div class="code-wrap" style="margin-top:0;border-top-left-radius:0;border-top-right-radius:0;">
+          <div class="code-header"><span class="code-lang">text</span><span class="code-label" style="color:var(--teal)">solution: base repo switched to your own fork</span></div>
+          <pre>base repository:  YOUR-USERNAME/data-engineering-batch-4  base: main
+head repository:  YOUR-USERNAME/data-engineering-batch-4  compare: week1-assignment
+
+<span class="cm"># This PR merges your branch into your OWN main. Your instructor reviews</span>
+<span class="cm"># the diff on the PR page — same review experience, correct repo.</span></pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout tip">
+      <span class="callout-icon">💡</span>
+      <div><strong>Why bother with a PR to yourself?</strong> It gives your instructor a clean diff to review and comment on, exactly like a real-world code review — without needing write access to your fork or you needing write access to the course repo.</div>
+    </div>
+
+    <div class="nav-buttons">
+      <button class="nav-btn" onclick="goTo(4)">← Branch &amp; commit</button>
+      <button class="nav-btn primary" onclick="goTo(6)">Sync with upstream →</button>
+    </div>
+  </section>
+
+
+  <!-- ── 6: Sync with upstream ── -->
+  <section class="section" id="sec-6">
+    <div class="section-eyebrow">Concept 6 of 7</div>
+    <h1 class="section-heading">Sync with upstream</h1>
+    <p class="section-intro">
+      After every class, new material — code, datasets, notes — gets pushed to the original
+      course repository. Your fork does not update itself. You need to explicitly pull those
+      changes in, ideally right before you start the next assignment.
+    </p>
+
+    <h2 class="subsection">The command-line way</h2>
+    <div class="code-wrap">
+      <div class="code-header"><span class="code-lang">bash</span><span class="code-label">run this after every class</span></div>
+      <pre><span class="cm"># 1. Switch to your local main branch</span>
+<span class="bi">git</span> <span class="fn">checkout</span> main
+
+<span class="cm"># 2. Download the latest history from the instructor's repo</span>
+<span class="bi">git</span> <span class="fn">fetch</span> upstream
+
+<span class="cm"># 3. Merge it into your local main</span>
+<span class="bi">git</span> <span class="fn">merge</span> upstream/main
+
+<span class="cm"># 4. Push the update back up to your fork on GitHub</span>
+<span class="bi">git</span> <span class="fn">push</span> origin main</pre>
+    </div>
+
+    <p>Steps 2 and 3 can be combined into one command:</p>
+    <div class="code-wrap">
+      <div class="code-header"><span class="code-lang">bash</span><span class="code-label">shortcut: fetch + merge in one step</span></div>
+      <pre><span class="bi">git</span> <span class="fn">checkout</span> main
+<span class="bi">git</span> <span class="fn">pull</span> upstream main
+<span class="bi">git</span> <span class="fn">push</span> origin main</pre>
+    </div>
+
+    <h2 class="subsection">The no-terminal way: GitHub's Sync fork button</h2>
+    <p>If you'd rather not use the command line for this, GitHub can do steps 2–4 for you in the browser:</p>
+    <ul class="check-list">
+      <li>Open your fork: <code>github.com/YOUR-USERNAME/data-engineering-batch-4</code></li>
+      <li>Click <strong>Sync fork</strong> near the top of the file list</li>
+      <li>Click <strong>Update branch</strong></li>
+      <li>Back on your laptop, run <code>git pull origin main</code> to bring the update down locally</li>
+    </ul>
+
+    <h2 class="subsection">Before / After — forgetting to sync</h2>
+    <div class="compare-wrap">
+      <div class="compare-tabs">
+        <button class="compare-tab active-before" onclick="toggle(this,'before','cmp-sync')">❌ Before — branching off a stale fork</button>
+        <button class="compare-tab" onclick="toggle(this,'after','cmp-sync')">✓ After — sync first, then branch</button>
+      </div>
+      <div id="cmp-sync-before" class="compare-panel visible">
+        <div class="code-wrap" style="margin-top:0;border-top-left-radius:0;border-top-right-radius:0;">
+          <div class="code-header"><span class="code-lang">bash</span><span class="code-label" style="color:var(--red)">problem: missing files, and a messy merge later</span></div>
+          <pre><span class="cm"># Week 3 starts. You never synced after Week 2.</span>
+<span class="bi">git</span> <span class="fn">checkout</span> -b week3-assignment
+<span class="bi">cd</span> Week3
+<span class="cm"># bash: cd: Week3: No such file or directory</span>
+<span class="cm">#</span>
+<span class="cm"># Week 3 material doesn't exist in your fork yet. You'd need to sync now</span>
+<span class="cm"># anyway — except your assignment branch already has commits on it,</span>
+<span class="cm"># making the sync more complicated than it needed to be.</span></pre>
+        </div>
+      </div>
+      <div id="cmp-sync-after" class="compare-panel">
+        <div class="code-wrap" style="margin-top:0;border-top-left-radius:0;border-top-right-radius:0;">
+          <div class="code-header"><span class="code-lang">bash</span><span class="code-label" style="color:var(--teal)">solution: sync main, then branch off the fresh copy</span></div>
+          <pre><span class="bi">git</span> <span class="fn">checkout</span> main
+<span class="bi">git</span> <span class="fn">pull</span> upstream main
+<span class="bi">git</span> <span class="fn">push</span> origin main
+
+<span class="cm"># Now Week3/ exists locally. Branch off the up-to-date main:</span>
+<span class="bi">git</span> <span class="fn">checkout</span> -b week3-assignment</pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout tip">
+      <span class="callout-icon">💡</span>
+      <div><strong>Habit to build:</strong> sync main <em>before</em> creating each new assignment branch, not after. Concept 4's rule — never commit directly on main — is exactly what makes this sync painless every time.</div>
+    </div>
+
+    <div class="nav-buttons">
+      <button class="nav-btn" onclick="goTo(5)">← Push &amp; open a PR</button>
+      <button class="nav-btn primary" onclick="goTo(7)">Full cheat sheet →</button>
+    </div>
+  </section>
+
+
+  <!-- ── 7: Cheat sheet ── -->
+  <section class="section" id="sec-7">
+    <div class="section-eyebrow">Concept 7 of 7</div>
+    <h1 class="section-heading">Putting it all together</h1>
+    <p class="section-intro">
+      Two setup steps happen once. Then you repeat the same short loop for every assignment,
+      all course long. Bookmark this page.
+    </p>
+
+    <div class="callout goal">
+      <span class="callout-icon">🎯</span>
+      <div><strong>Before Week 1 class:</strong> complete the one-time setup below so you're not doing it live during class time.</div>
+    </div>
+
+    <div class="code-wrap">
+      <div class="code-header"><span class="code-lang">bash</span><span class="code-label">one-time setup — do this before Week 1</span></div>
+      <pre><span class="cm"># 1. Fork on GitHub (in your browser)</span>
+<span class="cm">#    github.com/bishalrijal/data-engineering-batch-4 → click "Fork"</span>
+
+<span class="cm"># 2. Clone YOUR fork</span>
+<span class="bi">git</span> <span class="fn">clone</span> <span class="st">https://github.com/YOUR-USERNAME/data-engineering-batch-4.git</span>
+<span class="bi">cd</span> data-engineering-batch-4
+
+<span class="cm"># 3. Add the instructor's repo as "upstream"</span>
+<span class="bi">git</span> <span class="fn">remote</span> add upstream <span class="st">https://github.com/bishalrijal/data-engineering-batch-4.git</span>
+
+<span class="cm"># 4. Confirm both remotes are set</span>
+<span class="bi">git</span> <span class="fn">remote</span> -v</pre>
+    </div>
+
+    <div class="code-wrap">
+      <div class="code-header"><span class="code-lang">bash</span><span class="code-label">per-assignment loop — repeat every week</span></div>
+      <pre><span class="cm"># 1. Sync main with the instructor's latest material</span>
+<span class="bi">git</span> <span class="fn">checkout</span> main
+<span class="bi">git</span> <span class="fn">pull</span> upstream main
+<span class="bi">git</span> <span class="fn">push</span> origin main
+
+<span class="cm"># 2. Create a branch for this week's assignment</span>
+<span class="bi">git</span> <span class="fn">checkout</span> -b week2-assignment
+
+<span class="cm"># 3. Do the work, commit as you go</span>
+<span class="bi">git</span> <span class="fn">add</span> Week2/solution.sql
+<span class="bi">git</span> <span class="fn">commit</span> -m <span class="st">"Add week 2 solution"</span>
+
+<span class="cm"># 4. Push the branch to your fork</span>
+<span class="bi">git</span> <span class="fn">push</span> -u origin week2-assignment
+
+<span class="cm"># 5. Open a pull request on GitHub</span>
+<span class="cm">#    base repo: YOUR-USERNAME/data-engineering-batch-4   base: main</span>
+<span class="cm">#    head repo: YOUR-USERNAME/data-engineering-batch-4   compare: week2-assignment</span>
+<span class="cm">#    → Create pull request → share the link with your instructor</span></pre>
+    </div>
+
+    <h2 class="subsection">Where each concept lives in this loop</h2>
+    <ul class="check-list">
+      <li><strong>Fork:</strong> a one-time click on GitHub that gives you your own copy of the course repo</li>
+      <li><strong>Clone &amp; remotes:</strong> <code>origin</code> is your fork (push here), <code>upstream</code> is the instructor's repo (pull from here)</li>
+      <li><strong>Branch:</strong> <code>git checkout -b week2-assignment</code> — one per assignment, off a freshly synced <code>main</code></li>
+      <li><strong>Commit:</strong> <code>git add</code> + <code>git commit -m "..."</code> — small, meaningful snapshots as you work</li>
+      <li><strong>Push &amp; PR:</strong> <code>git push -u origin &lt;branch&gt;</code>, then open a PR with both base and head on your own fork</li>
+      <li><strong>Sync:</strong> <code>git pull upstream main</code> then <code>git push origin main</code> — run this after every class, before branching</li>
+    </ul>
+
+    <div class="callout goal">
+      <span class="callout-icon">🎯</span>
+      <div><strong>You're ready for Week 1</strong> when your fork is cloned, both remotes are configured, and you can describe — without looking back — why assignment PRs target your own fork instead of the instructor's repo.</div>
+    </div>
+
+    <div class="nav-buttons">
+      <button class="nav-btn" onclick="goTo(6)">← Sync with upstream</button>
+      <button class="nav-btn" style="opacity:0.3;pointer-events:none;">End of pre-read</button>
+    </div>
+  </section>
+
+</main>
+
+<script>
+  const TOTAL = 8;
+  let visited = new Set([0]);
+
+  function goTo(idx) {
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach((n, i) => {
+      n.classList.remove('active');
+      if (visited.has(i) && i !== idx) n.classList.add('done');
+      else n.classList.remove('done');
+    });
+
+    const sec = document.getElementById('sec-' + idx);
+    if (sec) sec.classList.add('active');
+
+    const navItems = document.querySelectorAll('.nav-item');
+    if (navItems[idx]) navItems[idx].classList.add('active');
+
+    visited.add(idx);
+    updateProgress();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function updateProgress() {
+    const pct = Math.round((visited.size / TOTAL) * 100);
+    document.getElementById('progress-fill').style.width = pct + '%';
+    document.getElementById('progress-text').textContent = visited.size + ' / ' + TOTAL;
+  }
+
+  function toggle(btn, side, id) {
+    const wrap = btn.closest('.compare-wrap');
+    wrap.querySelectorAll('.compare-panel').forEach(p => p.classList.remove('visible'));
+    wrap.querySelectorAll('.compare-tab').forEach(t => {
+      t.classList.remove('active-before', 'active-after');
+    });
+    document.getElementById(id + '-' + side).classList.add('visible');
+    btn.classList.add('active-' + side);
+  }
+
+  updateProgress();
+</script>
+</body>
+</html>

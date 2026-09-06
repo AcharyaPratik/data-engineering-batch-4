@@ -1,0 +1,1285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Class 2 Pre-read — SQL Basics</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --navy:      #0F1B2D;
+    --navy2:     #162236;
+    --navy3:     #1D2E47;
+    --teal:      #00C9A7;
+    --teal-dim:  #00956B;
+    --teal-bg:   rgba(0,201,167,0.08);
+    --teal-bd:   rgba(0,201,167,0.25);
+    --white:     #F0F4F8;
+    --white2:    #D8E2EE;
+    --slate:     #8899AA;
+    --slate2:    #607080;
+    --code-bg:   #111D2E;
+    --code-bd:   #243347;
+    --red:       #FF6B6B;
+    --red-bg:    rgba(255,107,107,0.08);
+    --red-bd:    rgba(255,107,107,0.25);
+    --amber:     #FFB347;
+    --amber-bg:  rgba(255,179,71,0.08);
+    --amber-bd:  rgba(255,179,71,0.25);
+    --green:     #4CAF82;
+    --green-bg:  rgba(76,175,130,0.08);
+    --green-bd:  rgba(76,175,130,0.25);
+    --sidebar-w: 240px;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  code, pre, .mono, kbd {
+    font-variant-ligatures: none;
+    font-feature-settings: "liga" 0, "calt" 0;
+  }
+
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background: var(--navy);
+    color: var(--white);
+    min-height: 100vh;
+    display: flex;
+    font-size: 15px;
+    line-height: 1.7;
+  }
+
+  /* ── Sidebar ── */
+  .sidebar {
+    width: var(--sidebar-w);
+    min-height: 100vh;
+    background: var(--navy2);
+    border-right: 1px solid var(--code-bd);
+    position: fixed;
+    top: 0; left: 0;
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    z-index: 100;
+    overflow-y: auto;
+  }
+
+  .sidebar-header {
+    padding: 24px 20px 20px;
+    border-bottom: 1px solid var(--code-bd);
+  }
+
+  .sidebar-eyebrow {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    color: var(--teal);
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .sidebar-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--white);
+    line-height: 1.4;
+  }
+
+  .sidebar-sub {
+    font-size: 11px;
+    color: var(--slate);
+    margin-top: 4px;
+  }
+
+  .sidebar-nav { padding: 12px 0; flex: 1; }
+
+  .nav-section-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    color: var(--slate2);
+    text-transform: uppercase;
+    padding: 10px 20px 4px;
+  }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 20px;
+    font-size: 13px;
+    color: var(--slate);
+    cursor: pointer;
+    transition: all 0.15s;
+    border-left: 2px solid transparent;
+    text-decoration: none;
+  }
+
+  .nav-item:hover { color: var(--white); background: var(--navy3); }
+
+  .nav-item.active {
+    color: var(--teal);
+    border-left-color: var(--teal);
+    background: var(--teal-bg);
+    font-weight: 500;
+  }
+
+  .nav-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--slate2);
+    flex-shrink: 0;
+    transition: background 0.15s;
+  }
+  .nav-item.active .nav-dot,
+  .nav-item.done .nav-dot { background: var(--teal); }
+  .nav-item.done { color: var(--slate); }
+
+  .progress-bar-wrap {
+    padding: 16px 20px;
+    border-top: 1px solid var(--code-bd);
+  }
+  .progress-label {
+    font-size: 11px;
+    color: var(--slate);
+    margin-bottom: 6px;
+    display: flex;
+    justify-content: space-between;
+  }
+  .progress-track {
+    height: 3px;
+    background: var(--navy3);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: var(--teal);
+    border-radius: 2px;
+    transition: width 0.4s ease;
+    width: 0%;
+  }
+
+  /* ── Main content ── */
+  .main {
+    margin-left: var(--sidebar-w);
+    flex: 1;
+    max-width: 800px;
+    padding: 48px 56px;
+  }
+
+  .section { display: none; }
+  .section.active { display: block; }
+
+  /* ── Section header ── */
+  .section-eyebrow {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    color: var(--teal);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  h1.section-heading {
+    font-size: 32px;
+    font-weight: 600;
+    color: var(--white);
+    line-height: 1.2;
+    margin-bottom: 14px;
+    letter-spacing: -0.02em;
+  }
+
+  .section-intro {
+    font-size: 16px;
+    color: var(--white2);
+    line-height: 1.75;
+    margin-bottom: 32px;
+    padding-bottom: 28px;
+    border-bottom: 1px solid var(--code-bd);
+  }
+
+  /* ── Prose ── */
+  h2.subsection {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--white);
+    margin: 32px 0 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  h2.subsection::before {
+    content: '';
+    display: block;
+    width: 3px;
+    height: 18px;
+    background: var(--teal);
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+
+  p { color: var(--white2); margin-bottom: 14px; }
+
+  strong { color: var(--white); font-weight: 500; }
+
+  /* ── Callout boxes ── */
+  .callout {
+    border-radius: 8px;
+    padding: 14px 18px;
+    margin: 20px 0;
+    font-size: 14px;
+    line-height: 1.6;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+  }
+  .callout-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+  .callout.tip  { background: var(--teal-bg); border: 1px solid var(--teal-bd); color: var(--white2); }
+  .callout.warn { background: var(--amber-bg); border: 1px solid var(--amber-bd); color: var(--white2); }
+  .callout.goal { background: var(--green-bg); border: 1px solid var(--green-bd); color: var(--white2); }
+  .callout.error{ background: var(--red-bg);   border: 1px solid var(--red-bd);   color: var(--white2); }
+  .callout strong { color: var(--white); }
+
+  /* ── Code block ── */
+  .code-wrap {
+    background: var(--code-bg);
+    border: 1px solid var(--code-bd);
+    border-radius: 10px;
+    margin: 18px 0;
+    overflow: hidden;
+  }
+
+  .code-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--code-bd);
+    background: var(--navy2);
+  }
+
+  .code-lang {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--teal);
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 0.05em;
+  }
+
+  .code-label {
+    font-size: 11px;
+    color: var(--slate);
+  }
+
+  pre {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    line-height: 1.7;
+    color: var(--white);
+    padding: 18px 20px;
+    overflow-x: auto;
+    white-space: pre;
+  }
+
+  /* syntax highlight helpers */
+  .kw  { color: #FF79C6; }   /* keywords */
+  .fn  { color: #50FA7B; }   /* functions */
+  .st  { color: #F1FA8C; }   /* strings */
+  .cm  { color: #6272A4; }   /* comments */
+  .nm  { color: #BD93F9; }   /* numbers/names */
+  .op  { color: #FF79C6; }   /* operators */
+  .bi  { color: #8BE9FD; }   /* builtins / types */
+
+  /* ── Before/After toggle ── */
+  .compare-wrap { margin: 24px 0; }
+
+  .compare-tabs {
+    display: flex;
+    border-bottom: 1px solid var(--code-bd);
+    margin-bottom: 0;
+  }
+
+  .compare-tab {
+    padding: 9px 20px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    color: var(--slate);
+    transition: all 0.15s;
+    margin-bottom: -1px;
+    background: none;
+    border-top: none;
+    border-left: none;
+    border-right: none;
+  }
+
+  .compare-tab:hover { color: var(--white2); }
+  .compare-tab.active-before { color: var(--red); border-bottom-color: var(--red); }
+  .compare-tab.active-after  { color: var(--teal); border-bottom-color: var(--teal); }
+
+  .compare-panel { display: none; }
+  .compare-panel.visible { display: block; }
+
+  /* ── Key term pill ── */
+  .term {
+    display: inline-block;
+    background: var(--teal-bg);
+    border: 1px solid var(--teal-bd);
+    color: var(--teal);
+    font-size: 12px;
+    font-weight: 500;
+    font-family: 'JetBrains Mono', monospace;
+    padding: 1px 8px;
+    border-radius: 4px;
+    margin: 0 1px;
+  }
+
+  /* ── Nav buttons ── */
+  .nav-buttons {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 52px;
+    padding-top: 28px;
+    border-top: 1px solid var(--code-bd);
+  }
+
+  .nav-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+    border: 1px solid var(--code-bd);
+    background: var(--navy2);
+    color: var(--white2);
+    text-decoration: none;
+  }
+
+  .nav-btn:hover { border-color: var(--teal); color: var(--teal); }
+  .nav-btn:disabled { opacity: 0.3; pointer-events: none; }
+  .nav-btn.primary { background: var(--teal-bg); border-color: var(--teal); color: var(--teal); }
+
+  /* ── Check list ── */
+  .check-list { list-style: none; margin: 12px 0 20px; }
+  .check-list li {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    padding: 6px 0;
+    font-size: 14px;
+    color: var(--white2);
+    border-bottom: 1px solid var(--code-bd);
+  }
+  .check-list li:last-child { border-bottom: none; }
+  .check-list li::before {
+    content: '→';
+    color: var(--teal);
+    flex-shrink: 0;
+    font-weight: 600;
+    margin-top: 1px;
+  }
+
+  /* ── Concept card grid ── */
+  .concept-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin: 20px 0;
+  }
+
+  .concept-card {
+    background: var(--navy2);
+    border: 1px solid var(--code-bd);
+    border-radius: 10px;
+    padding: 16px 18px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .concept-card:hover {
+    border-color: var(--teal);
+    background: var(--navy3);
+  }
+
+  .concept-card-num {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--teal);
+    letter-spacing: 0.1em;
+    margin-bottom: 6px;
+  }
+
+  .concept-card-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--white);
+    margin-bottom: 4px;
+  }
+
+  .concept-card-sub {
+    font-size: 12px;
+    color: var(--slate);
+    line-height: 1.5;
+  }
+
+  /* ── Table ── */
+  table { width: 100%; border-collapse: collapse; margin: 18px 0; font-size: 13.5px; }
+  thead tr { border-bottom: 1px solid var(--teal-bd); }
+  th { padding: 10px 14px; text-align: left; font-size: 11px; font-weight: 600; color: var(--teal); letter-spacing: 0.08em; text-transform: uppercase; }
+  td { padding: 10px 14px; border-bottom: 1px solid var(--code-bd); color: var(--white2); vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  td code, th code { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--teal); }
+
+  /* ── inline code ── */
+  code { font-family: 'JetBrains Mono', monospace; font-size: 12.5px; color: var(--teal); background: var(--teal-bg); padding: 1px 6px; border-radius: 4px; }
+
+  /* ── The final script banner ── */
+  .script-banner {
+    background: linear-gradient(135deg, var(--navy3) 0%, #0D2535 100%);
+    border: 1px solid var(--teal-bd);
+    border-radius: 12px;
+    padding: 24px 28px;
+    margin: 28px 0;
+  }
+  .script-banner-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--white);
+    margin-bottom: 8px;
+  }
+  .script-banner-sub {
+    font-size: 14px;
+    color: var(--slate);
+    margin-bottom: 0;
+  }
+
+  /* ── Order-of-execution strip ── */
+  .exec-order {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 18px 0;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+  }
+  .exec-step {
+    background: var(--navy2);
+    border: 1px solid var(--code-bd);
+    border-radius: 6px;
+    padding: 6px 10px;
+    color: var(--white2);
+  }
+  .exec-step.hi { border-color: var(--teal-bd); color: var(--teal); background: var(--teal-bg); }
+  .exec-arrow { color: var(--slate2); }
+</style>
+</head>
+<body>
+
+<!-- ── Sidebar ── -->
+<nav class="sidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-eyebrow">Class 2 · Pre-read</div>
+    <div class="sidebar-title">SQL Basics with the rides table</div>
+    <div class="sidebar-sub">7 concepts · ~40 min</div>
+  </div>
+
+  <div class="sidebar-nav">
+    <div class="nav-section-label">Start here</div>
+    <a class="nav-item active" onclick="goTo(0)" href="#">
+      <span class="nav-dot"></span>Overview
+    </a>
+
+    <div class="nav-section-label">Concepts</div>
+    <a class="nav-item" onclick="goTo(1)" href="#">
+      <span class="nav-dot"></span>1 · DDL — schema
+    </a>
+    <a class="nav-item" onclick="goTo(2)" href="#">
+      <span class="nav-dot"></span>2 · DML — data
+    </a>
+    <a class="nav-item" onclick="goTo(3)" href="#">
+      <span class="nav-dot"></span>3 · DQL — queries
+    </a>
+    <a class="nav-item" onclick="goTo(4)" href="#">
+      <span class="nav-dot"></span>4 · Working with NULL
+    </a>
+    <a class="nav-item" onclick="goTo(5)" href="#">
+      <span class="nav-dot"></span>5 · Aggregation &amp; GROUP BY
+    </a>
+    <a class="nav-item" onclick="goTo(6)" href="#">
+      <span class="nav-dot"></span>6 · HAVING
+    </a>
+    <a class="nav-item" onclick="goTo(7)" href="#">
+      <span class="nav-dot"></span>7 · Putting it together
+    </a>
+  </div>
+
+  <div class="progress-bar-wrap">
+    <div class="progress-label">
+      <span>Progress</span>
+      <span id="progress-text">0 / 8</span>
+    </div>
+    <div class="progress-track">
+      <div class="progress-fill" id="progress-fill"></div>
+    </div>
+  </div>
+</nav>
+
+<!-- ── Main ── -->
+<main class="main">
+
+  <!-- ── 0: Overview ── -->
+  <section class="section active" id="sec-0">
+    <div class="section-eyebrow">Before you start</div>
+    <h1 class="section-heading">One table. Every kind of SQL<br>you'll write this course.</h1>
+    <p class="section-intro">
+      Class 2 works entirely against a single table: <code>rides</code>, loaded from
+      <code>rides.csv</code> in Week 1. This pre-read covers the SQL you need before that class —
+      how the table is defined, how to safely change data in it, how to query it, and the two
+      traps that catch almost every beginner: NULL comparisons and mixing up <code>WHERE</code>
+      with <code>HAVING</code>.
+    </p>
+
+    <div class="callout goal">
+      <span class="callout-icon">🎯</span>
+      <div><strong>By the end of this pre-read</strong> you will be able to read and write the full query on page 7 — a report that answers a real business question using every concept here: filtering, grouping, aggregating, and handling missing data correctly.</div>
+    </div>
+
+    <h2 class="subsection">The table everything is built on</h2>
+    <p>Every example in this pre-read queries this table. Keep it open in another tab while you read.</p>
+
+    <div class="code-wrap">
+      <div class="code-header"><span class="code-lang">sql</span><span class="code-label">the rides table</span></div>
+      <pre><span class="kw">CREATE</span> <span class="kw">TABLE</span> rides (
+    ride_id          <span class="bi">INTEGER</span>       <span class="kw">PRIMARY KEY</span>,
+    driver_name      <span class="bi">VARCHAR</span>(<span class="nm">100</span>)  <span class="kw">NOT NULL</span>,
+    passenger_name   <span class="bi">VARCHAR</span>(<span class="nm">100</span>)  <span class="kw">NOT NULL</span>,
+    pickup_city      <span class="bi">VARCHAR</span>(<span class="nm">100</span>)  <span class="kw">NOT NULL</span>,
+    dropoff_city     <span class="bi">VARCHAR</span>(<span class="nm">100</span>)  <span class="kw">NOT NULL</span>,
+    fare_amount      <span class="bi">NUMERIC</span>(<span class="nm">10</span>,<span class="nm">2</span>) <span class="kw">NOT NULL</span> <span class="kw">CHECK</span> (fare_amount >= <span class="nm">0</span>),
+    ride_distance_km <span class="bi">NUMERIC</span>(<span class="nm">6</span>,<span class="nm">2</span>)  <span class="kw">NOT NULL</span> <span class="kw">CHECK</span> (ride_distance_km >= <span class="nm">0</span>),
+    ride_status      <span class="bi">VARCHAR</span>(<span class="nm">50</span>)   <span class="kw">NOT NULL</span> <span class="kw">DEFAULT</span> <span class="st">'pending'</span>
+                     <span class="kw">CHECK</span> (ride_status <span class="kw">IN</span> (<span class="st">'no_show'</span>, <span class="st">'completed'</span>, <span class="st">'cancelled'</span>)),
+    requested_at     <span class="bi">TIMESTAMP</span>     <span class="kw">NOT NULL</span>,
+    completed_at     <span class="bi">TIMESTAMP</span>,
+    rating           <span class="bi">NUMERIC</span>(<span class="nm">2</span>,<span class="nm">1</span>)  <span class="kw">CHECK</span> (rating >= <span class="nm">1.0</span> <span class="kw">AND</span> rating <= <span class="nm">5.0</span>),
+    payment_method   <span class="bi">VARCHAR</span>(<span class="nm">50</span>)
+);</pre>
+    </div>
+
+    <div class="script-banner">
+      <div class="script-banner-title">The scenario</div>
+      <div class="script-banner-sub">Pathao wants to launch a loyalty scheme: any driver who has completed more than 150 rides qualifies for a bonus. Answering that question — correctly, including drivers with missing ratings or payment methods — touches every concept in this pre-read.</div>
+    </div>
+
+    <h2 class="subsection">What's covered</h2>
+    <div class="concept-grid">
+      <div class="concept-card" onclick="goTo(1)">
+        <div class="concept-card-num">01</div>
+        <div class="concept-card-title">DDL</div>
+        <div class="concept-card-sub">CREATE and ALTER — defining structure and constraints.</div>
+      </div>
+      <div class="concept-card" onclick="goTo(2)">
+        <div class="concept-card-num">02</div>
+        <div class="concept-card-title">DML</div>
+        <div class="concept-card-sub">INSERT, UPDATE, DELETE — changing the rows, safely.</div>
+      </div>
+      <div class="concept-card" onclick="goTo(3)">
+        <div class="concept-card-num">03</div>
+        <div class="concept-card-title">DQL</div>
+        <div class="concept-card-sub">SELECT, WHERE, ORDER BY — reading data back out.</div>
+      </div>
+      <div class="concept-card" onclick="goTo(4)">
+        <div class="concept-card-num">04</div>
+        <div class="concept-card-title">Working with NULL</div>
+        <div class="concept-card-sub">Why <code>= NULL</code> silently returns nothing.</div>
+      </div>
+      <div class="concept-card" onclick="goTo(5)">
+        <div class="concept-card-num">05</div>
+        <div class="concept-card-title">Aggregation &amp; GROUP BY</div>
+        <div class="concept-card-sub">COUNT, SUM, AVG — one row per group.</div>
+      </div>
+      <div class="concept-card" onclick="goTo(6)">
+        <div class="concept-card-num">06</div>
+        <div class="concept-card-title">HAVING</div>
+        <div class="concept-card-sub">Filtering groups, not rows — and why WHERE can't do it.</div>
+      </div>
+    </div>
+
+    <div class="callout tip">
+      <span class="callout-icon">💡</span>
+      <div><strong>How to use this pre-read:</strong> Each page has a <em>Before / After</em> toggle. The Before tab is a query that looks reasonable but returns the wrong answer. The After tab fixes it — read both, the wrong answer is usually more instructive than the right one.</div>
+    </div>
+
+    <div class="nav-buttons">
+      <button class="nav-btn" disabled>← Previous</button>
+      <button class="nav-btn primary" onclick="goTo(1)">Start: DDL — schema →</button>
+    </div>
+  </section>
+
+
+  <!-- ── 1: DDL ── -->
+  <section class="section" id="sec-1">
+    <div class="section-eyebrow">Concept 1 of 7</div>
+    <h1 class="section-heading">DDL — Data Definition Language</h1>
+    <p class="section-intro">
+      DDL statements define the <strong>shape</strong> of your data — tables, columns, and the
+      rules that guard them. They don't touch rows. <code>CREATE</code>, <code>ALTER</code>, and
+      <code>DROP</code> are the three you'll use constantly; constraints are what make a table
+      trustworthy instead of just a bag of columns.
+    </p>
+
+    <h2 class="subsection">CREATE TABLE — defining structure</h2>
+    <p>Every column gets a type. Constraints attached to a column are rules the database enforces on every future insert or update — not suggestions.</p>
+
+    <div class="code-wrap">
+      <div class="code-header"><span class="code-lang">sql</span><span class="code-label">constraints on the rides table</span></div>
+      <pre><span class="kw">CREATE</span> <span class="kw">TABLE</span> rides (
+    ride_id     <span class="bi">INTEGER</span> <span class="kw">PRIMARY KEY</span>,        <span class="cm">-- unique, never NULL, one per row</span>
+    driver_name <span class="bi">VARCHAR</span>(<span class="nm">100</span>) <span class="kw">NOT NULL</span>,  <span class="cm">-- every row must have a value</span>
+    fare_amount <span class="bi">NUMERIC</span>(<span class="nm">10</span>,<span class="nm">2</span>) <span class="kw">NOT NULL</span>
+                <span class="kw">CHECK</span> (fare_amount >= <span class="nm">0</span>),        <span class="cm">-- rejects negative fares</span>
+    ride_status <span class="bi">VARCHAR</span>(<span class="nm">50</span>) <span class="kw">NOT NULL</span>
+                <span class="kw">DEFAULT</span> <span class="st">'pending'</span>               <span class="cm">-- used when no value is given</span>
+                <span class="kw">CHECK</span> (ride_status <span class="kw">IN</span> (<span class="st">'no_show'</span>, <span class="st">'completed'</span>, <span class="st">'cancelled'</span>))
+);</pre>
+    </div>
+
+    <table>
+      <thead><tr><th>Constraint</th><th>What it guarantees</th></tr></thead>
+      <tbody>
+        <tr><td><code>PRIMARY KEY</code></td><td>Every value in this column is unique and never NULL — identifies the row</td></tr>
+        <tr><td><code>NOT NULL</code></td><td>This column cannot be left empty on insert</td></tr>
+        <tr><td><code>CHECK (...)</code></td><td>A condition that must be true for every row — e.g. no negative fares</td></tr>
+        <tr><td><code>DEFAULT</code></td><td>The value used automatically when none is provided</td></tr>
+      </tbody>
+    </table>
+
+    <h2 class="subsection">ALTER TABLE — changing structure later</h2>
+    <p>Requirements change. <code>ALTER TABLE</code> lets you add columns or constraints to a table that already has data in it.</p>
+
+    <div class="code-wrap">
+      <div class="code-header"><span class="code-lang">sql</span><span class="code-label">adding a new status without breaking old rows</span></div>
+      <pre><span class="cm">-- "pending" needs to become a valid ride_status too</span>
+<span class="kw">ALTER</span> <span class="kw">TABLE</span> rides
+    <span class="kw">ADD</span> <span class="kw">CONSTRAINT</span> chk_ride_status
+    <span class="kw">CHECK</span> (ride_status <span class="kw">IN</span> (<span class="st">'no_show'</span>, <span class="st">'completed'</span>, <span class="st">'cancelled'</span>, <span class="st">'pending'</span>));</pre>
+    </div>
+
+    <h2 class="subsection">Before / After — a table with no guardrails</h2>
+    <div class="compare-wrap">
+      <div class="compare-tabs">
+        <button class="compare-tab active-before" onclick="toggle(this,'before','cmp-ddl')">❌ Before — no CHECK constraint</button>
+        <button class="compare-tab" onclick="toggle(this,'after','cmp-ddl')">✓ After — CHECK rejects bad data</button>
+      </div>
+      <div id="cmp-ddl-before" class="compare-panel visible">
+        <div class="code-wrap" style="margin-top:0;border-top-left-radius:0;border-top-right-radius:0;">
+          <div class="code-header"><span class="code-lang">sql</span><span class="code-label" style="color:var(--red)">problem: negative fare gets inserted silently</span></div>
+          <pre><span class="kw">CREATE</span> <span class="kw">TABLE</span> rides (
+    ride_id     <span class="bi">INTEGER</span> <span class="kw">PRIMARY KEY</span>,
+    fare_amount <span class="bi">NUMERIC</span>(<span class="nm">10</span>,<span class="nm">2</span>)     <span class="cm">-- no CHECK, no NOT NULL</span>
+);
+
+<span class="kw">INSERT</span> <span class="kw">INTO</span> rides (ride_id, fare_amount) <span class="kw">VALUES</span> (<span class="nm">5001</span>, -<span class="nm">100</span>);
+<span class="cm">-- INSERT 0 1  — succeeds. A ride now has a -100 fare.</span>
+<span class="cm">-- Every SUM(fare_amount) report from here on is silently wrong.</span></pre>
+        </div>
+      </div>
+      <div id="cmp-ddl-after" class="compare-panel">
+        <div class="code-wrap" style="margin-top:0;border-top-left-radius:0;border-top-right-radius:0;">
+          <div class="code-header"><span class="code-lang">sql</span><span class="code-label" style="color:var(--teal)">solution: the database refuses bad data at insert time</span></div>
+          <pre><span class="kw">CREATE</span> <span class="kw">TABLE</span> rides (
+    ride_id     <span class="bi">INTEGER</span> <span class="kw">PRIMARY KEY</span>,
+    fare_amount <span class="bi">NUMERIC</span>(<span class="nm">10</span>,<span class="nm">2</span>) <span class="kw">NOT NULL</span> <span class="kw">CHECK</span> (fare_amount >= <span class="nm">0</span>)
+);
+
+<span class="kw">INSERT</span> <span class="kw">INTO</span> rides (ride_id, fare_amount) <span class="kw">VALUES</span> (<span class="nm">5001</span>, -<span class="nm">100</span>);
+<span class="cm">-- ERROR: new row for relation "rides" violates check constraint</span>
+<span class="cm">-- "rides_fare_amount_check"</span>
+<span class="cm">-- The bad row never makes it in. The error happens where the mistake did.</span></pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout warn">
+      <span class="callout-icon">⚠️</span>
+      <div><strong>Watch out:</strong> adding a constraint with <code>ALTER TABLE</code> to a table that already has violating rows will fail immediately. Constraints are checked against existing data too, not just future inserts.</div>
+    </div>
+
+    <div class="nav-buttons">
+      <button class="nav-btn" onclick="goTo(0)">← Overview</button>
+      <button class="nav-btn primary" onclick="goTo(2)">DML — data →</button>
+    </div>
+  </section>
+
+
+  <!-- ── 2: DML ── -->
+  <section class="section" id="sec-2">
+    <div class="section-eyebrow">Concept 2 of 7</div>
+    <h1 class="section-heading">DML — Data Manipulation Language</h1>
+    <p class="section-intro">
+      Once the table exists, DML is how you change what's <em>in</em> it: <code>INSERT</code> adds
+      rows, <code>UPDATE</code> changes existing rows, <code>DELETE</code> removes them. All three
+      respect the constraints from Concept 1 — and all three are permanent the moment they run,
+      unless you're inside a transaction.
+    </p>
+
+    <h2 class="subsection">INSERT — adding a row</h2>
+    <div class="code-wrap">
+      <div class="code-header"><span class="code-lang">sql</span><span class="code-label">one new ride</span></div>
+      <pre><span class="kw">INSERT</span> <span class="kw">INTO</span> rides
+    (ride_id, driver_name, passenger_name, pickup_city, dropoff_city,
+     fare_amount, ride_distance_km, ride_status, requested_at, completed_at,
+     rating, payment_method)
+<span class="kw">VALUES</span>
+    (<span class="nm">5000</span>, <span class="st">'Bikash Karki'</span>, <span class="st">'Sabina Dahal'</span>, <span class="st">'Birgunj'</span>, <span class="st">'Kathmandu'</span>,
+     <span class="nm">17.96</span>, <span class="nm">31.75</span>, <span class="st">'completed'</span>, <span class="st">'2024-10-27 12:16:55'</span>, <span class="st">'2024-10-27 13:26:13'</span>,
+     <span class="nm">4.6</span>, <span class="st">'esewa'</span>);
+
+<span class="cm">-- Running it again with the same ride_id:</span>
+<span class="cm">-- ERROR: duplicate key value violates unique constraint "rides_pkey"</span>
+<span class="cm">-- PRIMARY KEY does its job — ride_id must be unique.</span></pre>
+    </div>
+
+    <h2 class="subsection">UPDATE — changing existing rows</h2>
+    <div class="code-wrap">
+      <div class="code-header"><span class="code-lang">sql</span><span class="code-label">correcting a payment method</span></div>
+      <pre><span class="kw">UPDATE</span> rides
+<span class="kw">SET</span> payment_method = <span class="st">'esewa'</span>
+<span class="kw">WHERE</span> ride_id = <span class="nm">5000</span>;
+
+<span class="cm">-- UPDATE 1  — exactly one row changed, because WHERE matched exactly one</span></pre>
+    </div>
+
+    <h2 class="subsection">DELETE — removing rows</h2>
+    <div class="code-wrap">
+      <div class="code-header"><span class="code-lang">sql</span><span class="code-label">removing a test row</span></div>
+      <pre><span class="kw">DELETE</span> <span class="kw">FROM</span> rides <span class="kw">WHERE</span> ride_id = <span class="nm">5000</span>;
+
+<span class="cm">-- DELETE 1</span></pre>
+    </div>
+
+    <h2 class="subsection">Before / After — the WHERE clause is not optional</h2>
+    <p>The single most dangerous mistake in SQL is forgetting <code>WHERE</code> on an <code>UPDATE</code> or <code>DELETE</code>. Without it, the statement applies to <strong>every row in the table</strong>.</p>
+
+    <div class="compare-wrap">
+      <div class="compare-tabs">
+        <button class="compare-tab active-before" onclick="toggle(this,'before','cmp-dml')">❌ Before — no WHERE clause</button>
+        <button class="compare-tab" onclick="toggle(this,'after','cmp-dml')">✓ After — WHERE scopes the change</button>
+      </div>
+      <div id="cmp-dml-before" class="compare-panel visible">
+        <div class="code-wrap" style="margin-top:0;border-top-left-radius:0;border-top-right-radius:0;">
+          <div class="code-header"><span class="code-lang">sql</span><span class="code-label" style="color:var(--red)">problem: updates the entire table</span></div>
+          <pre><span class="kw">UPDATE</span> rides
+<span class="kw">SET</span> ride_status = <span class="st">'cancelled'</span>;
+
+<span class="cm">-- UPDATE 48213</span>
+<span class="cm">--</span>
+<span class="cm">-- Every ride in the table — completed, no_show, everything — is now</span>
+<span class="cm">-- "cancelled". There was no WHERE, so there was no scope. This is</span>
+<span class="cm">-- almost never recoverable without a backup.</span></pre>
+        </div>
+      </div>
+      <div id="cmp-dml-after" class="compare-panel">
+        <div class="code-wrap" style="margin-top:0;border-top-left-radius:0;border-top-right-radius:0;">
+          <div class="code-header"><span class="code-lang">sql</span><span class="code-label" style="color:var(--teal)">solution: preview with SELECT, then scope with WHERE</span></div>
+          <pre><span class="cm">-- Step 1: run the WHERE as a SELECT first, check the row count looks right</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> rides <span class="kw">WHERE</span> ride_id = <span class="nm">5001</span>;
+<span class="cm">-- 1 row — good, that's the one row I meant to change</span>
+
+<span class="cm">-- Step 2: run the same WHERE on the UPDATE</span>
+<span class="kw">UPDATE</span> rides
+<span class="kw">SET</span> ride_status = <span class="st">'cancelled'</span>
+<span class="kw">WHERE</span> ride_id = <span class="nm">5001</span>;
+
+<span class="cm">-- UPDATE 1 — matches what you previewed, nothing more</span></pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout error">
+      <span class="callout-icon">🔴</span>
+      <div><strong>Habit to build now:</strong> before any <code>UPDATE</code> or <code>DELETE</code>, run the same <code>WHERE</code> clause as a <code>SELECT *</code> first. If the row count matches what you expect, swap <code>SELECT *</code> for the real statement.</div>
+    </div>
+
+    <div class="nav-buttons">
+      <button class="nav-btn" onclick="goTo(1)">← DDL — schema</button>
+      <button class="nav-btn primary" onclick="goTo(3)">DQL — queries →</button>
+    </div>
+  </section>
+
+
+  <!-- ── 3: DQL ── -->
+  <section class="section" id="sec-3">
+    <div class="section-eyebrow">Concept 3 of 7</div>
+    <h1 class="section-heading">DQL — Data Query Language</h1>
+    <p class="section-intro">
+      DQL is just <code>SELECT</code> — but nearly everything you'll do with SQL this course is a
+      variation on it. Choosing columns, filtering rows, ordering results, and limiting how many
+      come back are the four building blocks every other concept in this pre-read sits on top of.
+    </p>
+
+    <h2 class="subsection">Choosing columns</h2>
+    <div class="code-wrap">
+      <div class="code-header"><span class="code-lang">sql</span><span class="code-label">select specific columns, not everything</span></div>
+      <pre><span class="kw">SELECT</span> ride_id, driver_name, passenger_name
+<span class="kw">FROM</span> rides;
+
+<span class="cm">-- vs SELECT * — fine for exploring, but pulls every column</span>
+<span class="cm">-- including ones you don't need. Name the columns you actually use.</span></pre>
+    </div>
+
+    <h2 class="subsection">Filtering with WHERE</h2>
+    <div class="code-wrap">
+      <div class="code-header"><span class="code-lang">sql</span><span class="code-label">comparison and logical operators</span></div>
+      <pre><span class="kw">SELECT</span> * <span class="kw">FROM</span> rides
+<span class="kw">WHERE</span> ride_status = <span class="st">'cancelled'</span>
+  <span class="kw">AND</span> payment_method = <span class="st">'esewa'</span>;
+
+<span class="cm">-- Pattern matching with LIKE — % matches any sequence of characters</span>
+<span class="kw">SELECT</span> passenger_name <span class="kw">FROM</span> rides
+<span class="kw">WHERE</span> driver_name <span class="kw">LIKE</span> <span class="st">'%Ramesh%'</span>;</pre>
+    </div>
+
+    <table>
+      <thead><tr><th>Operator</th><th>Meaning</th></tr></thead>
+      <tbody>
+        <tr><td><code>=</code>, <code>!=</code>, <code>&lt;</code>, <code>&gt;</code></td><td>Standard comparisons</td></tr>
+        <tr><td><code>AND</code> / <code>OR</code></td><td>Combine multiple conditions</td></tr>
+        <tr><td><code>IN (...)</code></td><td>Matches any value in a list</td></tr>
+        <tr><td><code>LIKE '%text%'</code></td><td>Pattern match — <code>%</code> is a wildcard for any characters</td></tr>
+        <tr><td><code>IS NULL</code> / <code>IS NOT NULL</code></td><td>The only correct way to test for missing values — see Concept 4</td></tr>
+      </tbody>
+    </table>
+
+    <h2 class="subsection">Ordering and limiting</h2>
+    <div class="code-wrap">
+      <div class="code-header"><span class="code-lang">sql</span><span class="code-label">top 5 highest fares</span></div>
+      <pre><span class="kw">SELECT</span> driver_name, fare_amount
+<span class="kw">FROM</span> rides
+<span class="kw">ORDER</span> <span class="kw">BY</span> fare_amount <span class="kw">DESC</span>
+<span class="kw">LIMIT</span> <span class="nm">5</span>;</pre>
+    </div>
+
+    <h2 class="subsection">Before / After — case sensitivity in text comparisons</h2>
+    <div class="compare-wrap">
+      <div class="compare-tabs">
+        <button class="compare-tab active-before" onclick="toggle(this,'before','cmp-dql')">❌ Before — exact match misses rows</button>
+        <button class="compare-tab" onclick="toggle(this,'after','cmp-dql')">✓ After — normalize case on both sides</button>
+      </div>
+      <div id="cmp-dql-before" class="compare-panel visible">
+        <div class="code-wrap" style="margin-top:0;border-top-left-radius:0;border-top-right-radius:0;">
+          <div class="code-header"><span class="code-lang">sql</span><span class="code-label" style="color:var(--red)">problem: "ramesh shrestha" ≠ "Ramesh Shrestha"</span></div>
+          <pre><span class="kw">SELECT</span> * <span class="kw">FROM</span> rides
+<span class="kw">WHERE</span> driver_name = <span class="st">'ramesh shrestha'</span>;
+
+<span class="cm">-- 0 rows.</span>
+<span class="cm">-- The driver is stored as "Ramesh Shrestha". SQL string equality is</span>
+<span class="cm">-- case-sensitive by default — this silently returns nothing instead</span>
+<span class="cm">-- of an error, which is easy to miss.</span></pre>
+        </div>
+      </div>
+      <div id="cmp-dql-after" class="compare-panel">
+        <div class="code-wrap" style="margin-top:0;border-top-left-radius:0;border-top-right-radius:0;">
+          <div class="code-header"><span class="code-lang">sql</span><span class="code-label" style="color:var(--teal)">solution: LOWER() both sides before comparing</span></div>
+          <pre><span class="kw">SELECT</span> <span class="fn">LOWER</span>(<span class="st">'Ramesh Shrestha'</span>);
+<span class="cm">-- "ramesh shrestha"</span>
+
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> rides
+<span class="kw">WHERE</span> <span class="fn">LOWER</span>(driver_name) = <span class="fn">LOWER</span>(<span class="st">'ramesh shrestha'</span>);
+
+<span class="cm">-- Matches regardless of how the name was typed on either side.</span></pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="nav-buttons">
+      <button class="nav-btn" onclick="goTo(2)">← DML — data</button>
+      <button class="nav-btn primary" onclick="goTo(4)">Working with NULL →</button>
+    </div>
+  </section>
+
+
+  <!-- ── 4: NULL ── -->
+  <section class="section" id="sec-4">
+    <div class="section-eyebrow">Concept 4 of 7</div>
+    <h1 class="section-heading">Working with NULL</h1>
+    <p class="section-intro">
+      <code>NULL</code> means <strong>unknown</strong> — not zero, not an empty string, not false.
+      That single idea breaks a lot of intuition, because SQL's normal comparison operators
+      weren't built to handle "unknown." This is the concept that causes the most silently wrong
+      reports in this course, so read it slowly.
+    </p>
+
+    <h2 class="subsection">NULL breaks equality</h2>
+    <div class="code-wrap">
+      <div class="code-header"><span class="code-lang">sql</span><span class="code-label">= NULL is never true — not even for NULL itself</span></div>
+      <pre><span class="kw">SELECT</span> <span class="kw">NULL</span> = <span class="kw">NULL</span>;
+<span class="cm">-- NULL   (not TRUE — "unknown equals unknown" is still unknown)</span>
+
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> rides <span class="kw">WHERE</span> rating = <span class="kw">NULL</span>;
+<span class="cm">-- 0 rows — always, no matter how many NULL ratings exist.</span>
+<span class="cm">-- This query LOOKS correct and runs without error. It's just wrong.</span>
+
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> rides <span class="kw">WHERE</span> rating <span class="kw">IS</span> <span class="kw">NULL</span>;
+<span class="cm">-- The correct way to test for a missing value.</span></pre>
+    </div>
+
+    <h2 class="subsection">NULL and COUNT()</h2>
+    <div class="code-wrap">
+      <div class="code-header"><span class="code-lang">sql</span><span class="code-label">COUNT(*) vs COUNT(column)</span></div>
+      <pre><span class="kw">SELECT</span> <span class="fn">COUNT</span>(*) <span class="kw">FROM</span> rides;
+<span class="cm">-- Total rows in the table — NULLs included, every row counts</span>
+
+<span class="kw">SELECT</span> <span class="fn">COUNT</span>(rating) <span class="kw">FROM</span> rides;
+<span class="cm">-- Only rows where rating IS NOT NULL — rides never rated are skipped</span>
+
+<span class="cm">-- These two numbers being different is expected, not a bug —</span>
+<span class="cm">-- it tells you how many rides have no rating at all.</span></pre>
+    </div>
+
+    <h2 class="subsection">Before / After — NULL disappearing from a filter</h2>
+    <p>This exact bug shows up the moment you try to find "everything except X" — <code>!=</code> silently drops every NULL row along with it.</p>
+
+    <div class="compare-wrap">
+      <div class="compare-tabs">
+        <button class="compare-tab active-before" onclick="toggle(this,'before','cmp-null')">❌ Before — != quietly excludes NULLs</button>
+        <button class="compare-tab" onclick="toggle(this,'after','cmp-null')">✓ After — explicitly include IS NULL</button>
+      </div>
+      <div id="cmp-null-before" class="compare-panel visible">
+        <div class="code-wrap" style="margin-top:0;border-top-left-radius:0;border-top-right-radius:0;">
+          <div class="code-header"><span class="code-lang">sql</span><span class="code-label" style="color:var(--red)">problem: "not paid by cash" undercounts</span></div>
+          <pre><span class="kw">SELECT</span> <span class="fn">COUNT</span>(*) <span class="kw">FROM</span> rides
+<span class="kw">WHERE</span> payment_method != <span class="st">'cash'</span>;
+
+<span class="cm">-- Looks like: "every ride not paid in cash". It's actually:</span>
+<span class="cm">-- "every ride with a KNOWN payment method that isn't cash."</span>
+<span class="cm">-- Rides where payment_method is NULL (never recorded) vanish from</span>
+<span class="cm">-- both this count AND a `= 'cash'` count. They're invisible either way.</span></pre>
+        </div>
+      </div>
+      <div id="cmp-null-after" class="compare-panel">
+        <div class="code-wrap" style="margin-top:0;border-top-left-radius:0;border-top-right-radius:0;">
+          <div class="code-header"><span class="code-lang">sql</span><span class="code-label" style="color:var(--teal)">solution: decide explicitly what to do with NULL</span></div>
+          <pre><span class="kw">SELECT</span> <span class="fn">COUNT</span>(*) <span class="kw">FROM</span> rides
+<span class="kw">WHERE</span> payment_method != <span class="st">'cash'</span>
+   <span class="kw">OR</span> payment_method <span class="kw">IS</span> <span class="kw">NULL</span>;
+
+<span class="cm">-- Now "not cash" correctly includes rides with an unrecorded method too.</span>
+<span class="cm">-- Whether that's the RIGHT business rule is a separate question — but</span>
+<span class="cm">-- now it's a decision you made on purpose, not one SQL made for you.</span></pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout tip">
+      <span class="callout-icon">💡</span>
+      <div><strong><code>COALESCE(column, default)</code></strong> returns the column's value, or a fallback if it's NULL — e.g. <code>COALESCE(payment_method, 'unknown')</code>. Handy for reports where you want missing values to show up instead of disappearing.</div>
+    </div>
+
+    <div class="nav-buttons">
+      <button class="nav-btn" onclick="goTo(3)">← DQL — queries</button>
+      <button class="nav-btn primary" onclick="goTo(5)">Aggregation &amp; GROUP BY →</button>
+    </div>
+  </section>
+
+
+  <!-- ── 5: Aggregation & GROUP BY ── -->
+  <section class="section" id="sec-5">
+    <div class="section-eyebrow">Concept 5 of 7</div>
+    <h1 class="section-heading">Aggregation &amp; GROUP BY</h1>
+    <p class="section-intro">
+      An <strong>aggregate function</strong> takes many values and combines them into a single
+      summary value — a count, a total, an average. <code>GROUP BY</code> is what lets you get
+      one summary <em>per category</em> instead of one summary for the whole table — one row per
+      driver instead of one row for everyone.
+    </p>
+
+    <h2 class="subsection">Aggregate functions on the whole table</h2>
+    <div class="code-wrap">
+      <div class="code-header"><span class="code-lang">sql</span><span class="code-label">one summary row for all of rides</span></div>
+      <pre><span class="kw">SELECT</span> <span class="fn">COUNT</span>(*)              <span class="kw">FROM</span> rides;  <span class="cm">-- how many rides total</span>
+<span class="kw">SELECT</span> <span class="fn">SUM</span>(fare_amount)      <span class="kw">FROM</span> rides;  <span class="cm">-- total revenue</span>
+<span class="kw">SELECT</span> <span class="fn">AVG</span>(fare_amount)      <span class="kw">FROM</span> rides;  <span class="cm">-- average fare</span>
+<span class="kw">SELECT</span> <span class="fn">MIN</span>(ride_distance_km) <span class="kw">FROM</span> rides;  <span class="cm">-- shortest ride</span>
+<span class="kw">SELECT</span> <span class="fn">MAX</span>(ride_distance_km) <span class="kw">FROM</span> rides;  <span class="cm">-- longest ride</span></pre>
+    </div>
+
+    <h2 class="subsection">GROUP BY — one row per category</h2>
+    <div class="code-wrap">
+      <div class="code-header"><span class="code-lang">sql</span><span class="code-label">rides and revenue per driver</span></div>
+      <pre><span class="kw">SELECT</span>
+    driver_name,
+    <span class="fn">COUNT</span>(*)         <span class="kw">AS</span> total_rides,
+    <span class="fn">SUM</span>(fare_amount) <span class="kw">AS</span> total_revenue
+<span class="kw">FROM</span> rides
+<span class="kw">GROUP</span> <span class="kw">BY</span> driver_name
+<span class="kw">ORDER</span> <span class="kw">BY</span> total_revenue <span class="kw">DESC</span>;
+
+<span class="cm">-- One row PER DRIVER, not one row per ride. Rows with the same</span>
+<span class="cm">-- driver_name get collapsed into a single summary row.</span></pre>
+    </div>
+
+    <h2 class="subsection">The one rule that trips everyone up</h2>
+    <p>Every column in <code>SELECT</code> must either be inside an aggregate function, or listed in <code>GROUP BY</code>. SQL has no way to show one row per driver <em>and</em> a column with a different value on every underlying ride.</p>
+
+    <div class="compare-wrap">
+      <div class="compare-tabs">
+        <button class="compare-tab active-before" onclick="toggle(this,'before','cmp-group')">❌ Before — ungrouped column in SELECT</button>
+        <button class="compare-tab" onclick="toggle(this,'after','cmp-group')">✓ After — grouped by every plain column</button>
+      </div>
+      <div id="cmp-group-before" class="compare-panel visible">
+        <div class="code-wrap" style="margin-top:0;border-top-left-radius:0;border-top-right-radius:0;">
+          <div class="code-header"><span class="code-lang">sql</span><span class="code-label" style="color:var(--red)">problem: which ride_id would this even show?</span></div>
+          <pre><span class="kw">SELECT</span>
+    driver_name,
+    ride_id,               <span class="cm">-- ← not aggregated, not grouped</span>
+    <span class="fn">COUNT</span>(*)
+<span class="kw">FROM</span> rides
+<span class="kw">GROUP</span> <span class="kw">BY</span> driver_name;
+
+<span class="cm">-- ERROR: column "rides.ride_id" must appear in the GROUP BY clause</span>
+<span class="cm">-- or be used in an aggregate function</span>
+<span class="cm">--</span>
+<span class="cm">-- Makes sense: a driver has many ride_ids. Which one should print?</span></pre>
+        </div>
+      </div>
+      <div id="cmp-group-after" class="compare-panel">
+        <div class="code-wrap" style="margin-top:0;border-top-left-radius:0;border-top-right-radius:0;">
+          <div class="code-header"><span class="code-lang">sql</span><span class="code-label" style="color:var(--teal)">solution: group by status too, or drop ride_id</span></div>
+          <pre><span class="kw">SELECT</span>
+    driver_name,
+    ride_status,            <span class="cm">-- now listed in GROUP BY too</span>
+    <span class="fn">COUNT</span>(*)
+<span class="kw">FROM</span> rides
+<span class="kw">GROUP</span> <span class="kw">BY</span> driver_name, ride_status
+<span class="kw">ORDER</span> <span class="kw">BY</span> driver_name;
+
+<span class="cm">-- One row per (driver_name, ride_status) combination — well-defined.</span></pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout tip">
+      <span class="callout-icon">💡</span>
+      <div><strong>Mental model:</strong> <code>GROUP BY</code> runs before <code>SELECT</code>. Picture it splitting the table into stacks of rows — one stack per unique combination of the grouped columns — then collapsing each stack into one output row.</div>
+    </div>
+
+    <div class="nav-buttons">
+      <button class="nav-btn" onclick="goTo(4)">← Working with NULL</button>
+      <button class="nav-btn primary" onclick="goTo(6)">HAVING →</button>
+    </div>
+  </section>
+
+
+  <!-- ── 6: HAVING ── -->
+  <section class="section" id="sec-6">
+    <div class="section-eyebrow">Concept 6 of 7</div>
+    <h1 class="section-heading">HAVING</h1>
+    <p class="section-intro">
+      <code>WHERE</code> filters individual rows <em>before</em> grouping happens.
+      <code>HAVING</code> filters the summary rows <em>after</em> grouping and aggregating.
+      They look similar but run at different points in the query, which is exactly why one of
+      them can reference <code>COUNT(*)</code> and the other can't.
+    </p>
+
+    <h2 class="subsection">The loyalty scheme query</h2>
+    <p>Pathao wants drivers who completed more than 150 rides. "Completed" filters rows — that's <code>WHERE</code>. "More than 150" filters the count <em>after</em> grouping — that's <code>HAVING</code>.</p>
+
+    <div class="code-wrap">
+      <div class="code-header"><span class="code-lang">sql</span><span class="code-label">drivers who qualify for the bonus</span></div>
+      <pre><span class="kw">SELECT</span>
+    driver_name,
+    <span class="fn">COUNT</span>(*) <span class="kw">AS</span> completed_rides
+<span class="kw">FROM</span> rides
+<span class="kw">WHERE</span> ride_status = <span class="st">'completed'</span>     <span class="cm">-- filters ROWS, before grouping</span>
+<span class="kw">GROUP</span> <span class="kw">BY</span> driver_name
+<span class="kw">HAVING</span> <span class="fn">COUNT</span>(*) > <span class="nm">150</span>            <span class="cm">-- filters GROUPS, after aggregating</span>
+<span class="kw">ORDER</span> <span class="kw">BY</span> driver_name;</pre>
+    </div>
+
+    <h2 class="subsection">Why WHERE can't do this job</h2>
+    <div class="compare-wrap">
+      <div class="compare-tabs">
+        <button class="compare-tab active-before" onclick="toggle(this,'before','cmp-having')">❌ Before — aggregate inside WHERE</button>
+        <button class="compare-tab" onclick="toggle(this,'after','cmp-having')">✓ After — aggregate condition moved to HAVING</button>
+      </div>
+      <div id="cmp-having-before" class="compare-panel visible">
+        <div class="code-wrap" style="margin-top:0;border-top-left-radius:0;border-top-right-radius:0;">
+          <div class="code-header"><span class="code-lang">sql</span><span class="code-label" style="color:var(--red)">problem: COUNT(*) doesn't exist yet when WHERE runs</span></div>
+          <pre><span class="kw">SELECT</span> driver_name, <span class="fn">COUNT</span>(*)
+<span class="kw">FROM</span> rides
+<span class="kw">WHERE</span> ride_status = <span class="st">'completed'</span>
+  <span class="kw">AND</span> <span class="fn">COUNT</span>(*) > <span class="nm">150</span>              <span class="cm">-- ← invalid here</span>
+<span class="kw">GROUP</span> <span class="kw">BY</span> driver_name;
+
+<span class="cm">-- ERROR: aggregate functions are not allowed in WHERE</span>
+<span class="cm">--</span>
+<span class="cm">-- WHERE filters rows one at a time, before GROUP BY has run.</span>
+<span class="cm">-- There's no "count" yet for a single row to compare against.</span></pre>
+        </div>
+      </div>
+      <div id="cmp-having-after" class="compare-panel">
+        <div class="code-wrap" style="margin-top:0;border-top-left-radius:0;border-top-right-radius:0;">
+          <div class="code-header"><span class="code-lang">sql</span><span class="code-label" style="color:var(--teal)">solution: HAVING runs after COUNT(*) is known</span></div>
+          <pre><span class="kw">SELECT</span> driver_name, <span class="fn">COUNT</span>(*)
+<span class="kw">FROM</span> rides
+<span class="kw">WHERE</span> ride_status = <span class="st">'completed'</span>
+<span class="kw">GROUP</span> <span class="kw">BY</span> driver_name
+<span class="kw">HAVING</span> <span class="fn">COUNT</span>(*) > <span class="nm">150</span>;
+
+<span class="cm">-- Works — by the time HAVING evaluates, every group already has</span>
+<span class="cm">-- its final COUNT(*), so comparing against it is valid.</span></pre>
+        </div>
+      </div>
+    </div>
+
+    <h2 class="subsection">WHERE vs HAVING</h2>
+    <table>
+      <thead><tr><th></th><th>WHERE</th><th>HAVING</th></tr></thead>
+      <tbody>
+        <tr><td>Filters</td><td>Individual rows</td><td>Grouped/aggregated results</td></tr>
+        <tr><td>Runs</td><td>Before GROUP BY</td><td>After GROUP BY</td></tr>
+        <tr><td>Can use aggregates?</td><td>No</td><td>Yes — that's the point</td></tr>
+        <tr><td>Works without GROUP BY?</td><td>Yes — most common case</td><td>Yes, treats whole table as one group</td></tr>
+      </tbody>
+    </table>
+
+    <h2 class="subsection">The real order SQL executes in</h2>
+    <p>This is why <code>WHERE</code> can't see <code>COUNT(*)</code> and <code>HAVING</code> can — by the time each one runs, different things exist.</p>
+    <div class="exec-order">
+      <span class="exec-step">FROM</span><span class="exec-arrow">→</span>
+      <span class="exec-step hi">WHERE</span><span class="exec-arrow">→</span>
+      <span class="exec-step">GROUP BY</span><span class="exec-arrow">→</span>
+      <span class="exec-step hi">HAVING</span><span class="exec-arrow">→</span>
+      <span class="exec-step">SELECT</span><span class="exec-arrow">→</span>
+      <span class="exec-step">ORDER BY</span><span class="exec-arrow">→</span>
+      <span class="exec-step">LIMIT</span>
+    </div>
+    <p>Notice <code>SELECT</code> runs <em>after</em> <code>WHERE</code>, <code>GROUP BY</code>, and <code>HAVING</code> — which is also why you can't reference a column alias you defined in <code>SELECT</code> from inside a <code>WHERE</code> clause.</p>
+
+    <div class="nav-buttons">
+      <button class="nav-btn" onclick="goTo(5)">← Aggregation &amp; GROUP BY</button>
+      <button class="nav-btn primary" onclick="goTo(7)">Putting it together →</button>
+    </div>
+  </section>
+
+
+  <!-- ── 7: Putting it together ── -->
+  <section class="section" id="sec-7">
+    <div class="section-eyebrow">Concept 7 of 7</div>
+    <h1 class="section-heading">Putting it all together</h1>
+    <p class="section-intro">
+      Back to the loyalty scheme from page 0: Pathao wants every driver who has completed more
+      than 150 rides, their total completed rides, and their average rating — but ratings are
+      sometimes missing, and that has to be handled correctly, not ignored.
+    </p>
+
+    <div class="callout goal">
+      <span class="callout-icon">🎯</span>
+      <div><strong>Before Class 2:</strong> read this query until you can explain what each clause does and, more importantly, the order they run in.</div>
+    </div>
+
+    <div class="code-wrap">
+      <div class="code-header"><span class="code-lang">sql</span><span class="code-label">loyalty_scheme_report.sql — the complete query</span></div>
+      <pre><span class="cm">-- Drivers who completed more than 150 rides, with revenue and rating.
+-- COUNT(rating) instead of COUNT(*) so unrated rides don't inflate
+-- the denominator used for the average.</span>
+
+<span class="kw">SELECT</span>
+    driver_name,
+    <span class="fn">COUNT</span>(*)                          <span class="kw">AS</span> completed_rides,
+    <span class="fn">SUM</span>(fare_amount)                  <span class="kw">AS</span> total_revenue,
+    <span class="fn">ROUND</span>(<span class="fn">AVG</span>(fare_amount), <span class="nm">2</span>)          <span class="kw">AS</span> avg_fare,
+    <span class="fn">COUNT</span>(rating)                      <span class="kw">AS</span> rated_rides,
+    <span class="fn">ROUND</span>(<span class="fn">AVG</span>(rating), <span class="nm">2</span>)               <span class="kw">AS</span> avg_rating
+<span class="kw">FROM</span>
+    rides
+<span class="kw">WHERE</span>
+    ride_status = <span class="st">'completed'</span>              <span class="cm">-- row filter: only completed rides count</span>
+<span class="kw">GROUP</span> <span class="kw">BY</span>
+    driver_name                        <span class="cm">-- one output row per driver</span>
+<span class="kw">HAVING</span>
+    <span class="fn">COUNT</span>(*) > <span class="nm">150</span>                       <span class="cm">-- group filter: only qualifying drivers</span>
+<span class="kw">ORDER</span> <span class="kw">BY</span>
+    total_revenue <span class="kw">DESC</span>
+<span class="kw">LIMIT</span>
+    <span class="nm">20</span>;</pre>
+    </div>
+
+    <h2 class="subsection">Where each concept lives in this query</h2>
+    <ul class="check-list">
+      <li><strong>DDL:</strong> this query only works because <code>rides</code> already enforces <code>ride_status IN (...)</code> and <code>fare_amount >= 0</code> — garbage values can't sneak into the aggregates</li>
+      <li><strong>DML:</strong> every row summed here originally arrived through an <code>INSERT</code>, and any correction to a fare or status happened through a scoped <code>UPDATE</code></li>
+      <li><strong>DQL:</strong> <code>SELECT</code>, <code>FROM</code>, <code>ORDER BY</code>, <code>LIMIT</code> — the query's basic shape</li>
+      <li><strong>NULL:</strong> <code>COUNT(rating)</code> instead of <code>COUNT(*)</code> — unrated rides are excluded from <code>avg_rating</code>'s denominator instead of silently dragging it toward zero</li>
+      <li><strong>Aggregation &amp; GROUP BY:</strong> <code>COUNT</code>, <code>SUM</code>, <code>AVG</code> per <code>driver_name</code> — one summary row per driver</li>
+      <li><strong>HAVING:</strong> <code>COUNT(*) > 150</code> — filters which driver <em>groups</em> make the final report, something <code>WHERE</code> is structurally unable to do</li>
+    </ul>
+
+    <div class="callout goal">
+      <span class="callout-icon">🎯</span>
+      <div><strong>You're ready for Class 2</strong> when you can read this query top to bottom and explain, clause by clause, what each one does and why it runs in that order. In class, you'll extend this pattern with joins across multiple tables.</div>
+    </div>
+
+    <div class="nav-buttons">
+      <button class="nav-btn" onclick="goTo(6)">← HAVING</button>
+      <button class="nav-btn" style="opacity:0.3;pointer-events:none;">End of pre-read</button>
+    </div>
+  </section>
+
+</main>
+
+<script>
+  const TOTAL = 8;
+  let visited = new Set([0]);
+
+  function goTo(idx) {
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach((n, i) => {
+      n.classList.remove('active');
+      if (visited.has(i) && i !== idx) n.classList.add('done');
+      else n.classList.remove('done');
+    });
+
+    const sec = document.getElementById('sec-' + idx);
+    if (sec) sec.classList.add('active');
+
+    const navItems = document.querySelectorAll('.nav-item');
+    if (navItems[idx]) navItems[idx].classList.add('active');
+
+    visited.add(idx);
+    updateProgress();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function updateProgress() {
+    const pct = Math.round((visited.size / TOTAL) * 100);
+    document.getElementById('progress-fill').style.width = pct + '%';
+    document.getElementById('progress-text').textContent = visited.size + ' / ' + TOTAL;
+  }
+
+  function toggle(btn, side, id) {
+    const wrap = btn.closest('.compare-wrap');
+    wrap.querySelectorAll('.compare-panel').forEach(p => p.classList.remove('visible'));
+    wrap.querySelectorAll('.compare-tab').forEach(t => {
+      t.classList.remove('active-before', 'active-after');
+    });
+    document.getElementById(id + '-' + side).classList.add('visible');
+    btn.classList.add('active-' + side);
+  }
+
+  updateProgress();
+</script>
+</body>
+</html>
