@@ -76,7 +76,7 @@ GROUP BY
 ORDER BY 
 	total_revenue DESC;
 
-
+	
 -- Q7 — Ride outcomes by status (Intermediate · Aggregation)
 -- ride_status, ride_count, avg_distance_km (2 decimals) — sorted by ride_count desc
 SELECT
@@ -95,7 +95,20 @@ ORDER BY
 -- 8a. INSERT the new ride (ride_id 9001, rating NULL)
 INSERT
 	INTO
-	rides
+	rides(
+	ride_id,
+	driver_name,
+	passenger_name,
+	pickup_city,
+	dropoff_city,
+	fare_amount,
+	ride_distance_km,
+	ride_status,
+	requested_at,
+	completed_at,
+	rating,
+	payment_method
+	)
 VALUES (
 9001,
 'Sunita Gurung',
@@ -110,7 +123,6 @@ CURRENT_TIMESTAMP,
 NULL,
 'cash'
 );
-
 
 -- 8b. UPDATE the rating to 4.8 for ride_id 9001
 UPDATE
@@ -130,23 +142,39 @@ NOT VALID;
 
 
 -- 9b. INSERT using an invalid payment method — note the error you'd expect in a comment
+/*Expected: ERROR: new row for relation "rides" violates check 
+constraint "rides_payment_method_check" */
+
 INSERT
 	INTO
-	rides
+	rides(
+	ride_id,
+	driver_name,
+	passenger_name,
+	pickup_city,
+	dropoff_city,
+	fare_amount,
+	ride_distance_km,
+	ride_status,
+	requested_at,
+	completed_at,
+	rating,
+	payment_method
+	)
 VALUES (
     9003,
-'Pratik Acharya',
-'Cristano Ronaldo',
-'Kathmandu',
-'Pokhara',
-500,
-200,
-'completed',
-CURRENT_TIMESTAMP,
-CURRENT_TIMESTAMP,
-4.5,
-'paypal'
-);
+	'Pratik Acharya',
+	'Cristano Ronaldo',
+	'Kathmandu',
+	'Pokhara',
+	500,
+	200,
+	'completed',
+	CURRENT_TIMESTAMP,
+	CURRENT_TIMESTAMP,
+	4.5,
+	'paypal'
+	);
 
 
 -- Q10 — Rides priced above the platform average (Basic · Subquery)
