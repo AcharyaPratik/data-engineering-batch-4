@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Week 2 Cheatsheet — SQL Window Functions</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --navy:      #0F1B2D;
+    --navy2:     #162236;
+    --navy3:     #1D2E47;
+    --teal:      #00C9A7;
+    --teal-bg:   rgba(0,201,167,0.10);
+    --teal-bd:   rgba(0,201,167,0.28);
+    --white:     #F0F4F8;
+    --white2:    #D8E2EE;
+    --slate:     #8899AA;
+    --slate2:    #607080;
+    --code-bg:   #111D2E;
+    --code-bd:   #243347;
+    --amber:     #FFB347;
+    --amber-bg:  rgba(255,179,71,0.10);
+    --amber-bd:  rgba(255,179,71,0.28);
+    --purple:    #BD93F9;
+    --purple-bg: rgba(189,147,249,0.10);
+    --purple-bd: rgba(189,147,249,0.28);
+  }
+
+  code, pre { font-variant-ligatures: none; }
+
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background: var(--navy);
+    color: var(--white);
+    font-size: 15px;
+    line-height: 1.7;
+  }
+
+  .page { max-width: 760px; margin: 0 auto; padding: 48px 24px 80px; }
+
+  .eyebrow {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    color: var(--teal);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  h1 { font-size: 30px; font-weight: 600; letter-spacing: -0.02em; margin-bottom: 14px; }
+
+  h2 {
+    font-size: 19px;
+    font-weight: 600;
+    margin: 40px 0 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  h2::before { content: ''; width: 3px; height: 18px; background: var(--teal); border-radius: 2px; flex-shrink: 0; }
+
+  p { color: var(--white2); margin-bottom: 12px; }
+  strong { color: var(--white); font-weight: 500; }
+
+  code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12.5px;
+    color: var(--teal);
+    background: var(--teal-bg);
+    padding: 1px 6px;
+    border-radius: 4px;
+  }
+
+  .intro { font-size: 16px; padding-bottom: 24px; border-bottom: 1px solid var(--code-bd); margin-bottom: 8px; }
+
+  /* ── Callout ── */
+  .callout {
+    border-radius: 8px;
+    padding: 14px 18px;
+    margin: 18px 0;
+    font-size: 14px;
+    display: flex;
+    gap: 12px;
+    background: var(--teal-bg);
+    border: 1px solid var(--teal-bd);
+    color: var(--white2);
+  }
+  .callout span.ic { flex-shrink: 0; }
+  .callout strong { color: var(--white); }
+
+  /* ── Code block ── */
+  .code-wrap { background: var(--code-bg); border: 1px solid var(--code-bd); border-radius: 8px; margin: 16px 0; overflow: hidden; }
+  pre { font-family: 'JetBrains Mono', monospace; font-size: 12.5px; line-height: 1.7; color: var(--white); padding: 14px 16px; overflow-x: auto; }
+  .kw { color: #FF79C6; }
+  .fn { color: #50FA7B; }
+  .cm { color: #6272A4; }
+  .nm { color: #BD93F9; }
+
+  /* ── Tabs ── */
+  .tabs { display: flex; gap: 8px; flex-wrap: wrap; margin: 20px 0 22px; }
+  .tab-btn {
+    font-family: inherit;
+    font-size: 13.5px;
+    font-weight: 500;
+    padding: 9px 16px;
+    border-radius: 8px;
+    border: 1px solid var(--code-bd);
+    background: var(--navy2);
+    color: var(--white2);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .tab-btn:hover { border-color: var(--teal); color: var(--white); }
+  .tab-btn.active { background: var(--teal-bg); border-color: var(--teal); color: var(--teal); }
+
+  /* ── Widget shell ── */
+  .widget { background: var(--navy2); border: 1px solid var(--code-bd); border-radius: 12px; padding: 24px; }
+  .join-detail { display: none; }
+  .join-detail.active { display: block; }
+  .join-def { font-size: 15px; color: var(--white); margin-bottom: 4px; }
+  .join-note { font-size: 12.5px; color: var(--slate); margin-bottom: 16px; }
+
+  .legend { display: flex; gap: 18px; flex-wrap: wrap; font-size: 12px; color: var(--slate); margin: 14px 0; }
+  .legend-item { display: flex; align-items: center; gap: 6px; }
+  .legend-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+
+  .result-label { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--slate); margin: 18px 0 8px; }
+  table.result { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  table.result thead tr { border-bottom: 1px solid var(--teal-bd); }
+  table.result th { padding: 8px 10px; text-align: left; font-size: 10.5px; font-weight: 600; color: var(--teal); letter-spacing: 0.05em; text-transform: uppercase; white-space: nowrap; }
+  table.result th.computed { color: var(--amber); }
+  table.result td { padding: 9px 10px; border-bottom: 1px solid var(--code-bd); color: var(--white2); white-space: nowrap; }
+  table.result td.computed { color: var(--white); font-family: 'JetBrains Mono', monospace; font-size: 12.5px; }
+  .result-row { opacity: 0; transform: translateY(6px); transition: opacity 0.3s ease, transform 0.3s ease; border-left: 3px solid transparent; }
+  .result-row.show { opacity: 1; transform: translateY(0); }
+  .result-row.grp-a { border-left-color: var(--teal); background: var(--teal-bg); }
+  .result-row.grp-b { border-left-color: var(--purple); background: var(--purple-bg); }
+  .result-row.tie { border-left-color: var(--amber); background: var(--amber-bg); }
+  .badge { display: inline-block; font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--slate); background: var(--navy3); border: 1px solid var(--code-bd); padding: 1px 7px; border-radius: 4px; }
+
+  /* ── Plain tables (reference / mistakes) ── */
+  table.plain { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 13.5px; }
+  table.plain thead tr { border-bottom: 1px solid var(--teal-bd); }
+  table.plain th { padding: 10px 14px; text-align: left; font-size: 11px; font-weight: 600; color: var(--teal); letter-spacing: 0.06em; text-transform: uppercase; }
+  table.plain td { padding: 10px 14px; border-bottom: 1px solid var(--code-bd); color: var(--white2); vertical-align: top; }
+  table.plain tr:last-child td { border-bottom: none; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="eyebrow">Week 2 · Cheatsheet</div>
+  <h1>SQL Window Functions</h1>
+  <p class="intro">
+    <code>GROUP BY</code> collapses many rows into one per group. A <strong>window function</strong>
+    computes the same kind of calculation — a rank, a running total, a comparison to a neighboring
+    row — <strong>without collapsing anything</strong>: every original row stays, with a new column
+    attached. Every example below runs against a small <code>trips</code> table.
+  </p>
+
+  <h2>Anatomy of a window function</h2>
+  <div class="code-wrap"><pre><span class="fn">SUM</span>(fare_amount) <span class="kw">OVER</span> (
+    <span class="kw">PARTITION BY</span> driver_id   <span class="cm">-- optional: restart the calculation per group</span>
+    <span class="kw">ORDER BY</span> requested_at    <span class="cm">-- required for ranking, LAG/LEAD, running totals</span>
+)</pre></div>
+  <p>Drop the <code>PARTITION BY</code> and the function runs over the <strong>whole result set</strong>. Drop the <code>ORDER BY</code> on a ranking or offset function and the order — and the answer — is undefined.</p>
+
+  <h2>Try it: same trips table, four functions</h2>
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="rownum" onclick="applyTab('rownum')">ROW_NUMBER</button>
+    <button class="tab-btn" data-tab="rank" onclick="applyTab('rank')">RANK / DENSE_RANK</button>
+    <button class="tab-btn" data-tab="running" onclick="applyTab('running')">Running SUM</button>
+    <button class="tab-btn" data-tab="lag" onclick="applyTab('lag')">LAG</button>
+  </div>
+
+  <div class="widget">
+
+    <div class="join-detail active" data-tab="rownum">
+      <p class="join-def">Numbers each driver's trips in the order they happened — restarting at 1 for every driver.</p>
+      <p class="join-note">Partitioned by driver_id, ordered by requested_at</p>
+      <div class="code-wrap"><pre><span class="kw">SELECT</span> d.name driver_name, t.requested_at, t.fare_amount,
+    <span class="fn">ROW_NUMBER</span>() <span class="kw">OVER</span> (
+        <span class="kw">PARTITION BY</span> t.driver_id
+        <span class="kw">ORDER BY</span> t.requested_at
+    ) <span class="kw">AS</span> trip_number
+<span class="kw">FROM</span> trips t
+<span class="kw">JOIN</span> drivers d <span class="kw">ON</span> t.driver_id = d.driver_id;</pre></div>
+    </div>
+
+    <div class="join-detail" data-tab="rank">
+      <p class="join-def">Ranks every trip by fare, highest first — no partition, so all drivers compete together.</p>
+      <p class="join-note">RANK() skips a number after a tie; DENSE_RANK() doesn't</p>
+      <div class="code-wrap"><pre><span class="kw">SELECT</span> d.name driver_name, t.fare_amount,
+    <span class="fn">RANK</span>()       <span class="kw">OVER</span> (<span class="kw">ORDER BY</span> t.fare_amount <span class="kw">DESC</span>) <span class="kw">AS</span> fare_rank,
+    <span class="fn">DENSE_RANK</span>() <span class="kw">OVER</span> (<span class="kw">ORDER BY</span> t.fare_amount <span class="kw">DESC</span>) <span class="kw">AS</span> fare_dense_rank
+<span class="kw">FROM</span> trips t
+<span class="kw">JOIN</span> drivers d <span class="kw">ON</span> t.driver_id = d.driver_id;</pre></div>
+    </div>
+
+    <div class="join-detail" data-tab="running">
+      <p class="join-def">Adds up each driver's earnings trip by trip — the total so far, not the grand total.</p>
+      <p class="join-note">Partitioned by driver_id, ordered by requested_at</p>
+      <div class="code-wrap"><pre><span class="kw">SELECT</span> d.name driver_name, t.requested_at, t.fare_amount,
+    <span class="fn">SUM</span>(t.fare_amount) <span class="kw">OVER</span> (
+        <span class="kw">PARTITION BY</span> t.driver_id <span class="kw">ORDER BY</span> t.requested_at
+    ) <span class="kw">AS</span> running_total
+<span class="kw">FROM</span> trips t
+<span class="kw">JOIN</span> drivers d <span class="kw">ON</span> t.driver_id = d.driver_id;</pre></div>
+    </div>
+
+    <div class="join-detail" data-tab="lag">
+      <p class="join-def">Pulls each driver's previous trip fare onto the current row, so you can compare trip to trip.</p>
+      <p class="join-note">Partitioned by driver_id, ordered by requested_at</p>
+      <div class="code-wrap"><pre><span class="kw">SELECT</span> d.name driver_name, t.requested_at, t.fare_amount,
+    <span class="fn">LAG</span>(t.fare_amount) <span class="kw">OVER</span> (
+        <span class="kw">PARTITION BY</span> t.driver_id <span class="kw">ORDER BY</span> t.requested_at
+    ) <span class="kw">AS</span> prev_fare,
+    t.fare_amount <span class="kw">-</span> <span class="fn">LAG</span>(t.fare_amount) <span class="kw">OVER</span> (
+        <span class="kw">PARTITION BY</span> t.driver_id <span class="kw">ORDER BY</span> t.requested_at
+    ) <span class="kw">AS</span> fare_change
+<span class="kw">FROM</span> trips t
+<span class="kw">JOIN</span> drivers d <span class="kw">ON</span> t.driver_id = d.driver_id;</pre></div>
+    </div>
+
+    <div id="legend-wrap" class="legend">
+      <span class="legend-item"><span class="legend-dot" style="background:var(--teal)"></span>Ramesh's trips</span>
+      <span class="legend-item"><span class="legend-dot" style="background:var(--purple)"></span>Anita's trips</span>
+    </div>
+
+    <div class="result-label">Result</div>
+    <table class="result">
+      <thead id="result-head"></thead>
+      <tbody id="result-body"></tbody>
+    </table>
+
+  </div>
+
+  <h2>Reference</h2>
+  <table class="plain">
+    <thead><tr><th>Function</th><th>Type</th><th>Returns</th><th>Typical use</th></tr></thead>
+    <tbody>
+      <tr><td><code>ROW_NUMBER()</code></td><td>Ranking</td><td>A unique, sequential integer — ties broken arbitrarily</td><td>Numbering rows; picking "the first N per group"</td></tr>
+      <tr><td><code>RANK()</code></td><td>Ranking</td><td>Same rank for ties, then <strong>skips</strong> the next number(s)</td><td>Leaderboards where a gap after a tie is expected</td></tr>
+      <tr><td><code>DENSE_RANK()</code></td><td>Ranking</td><td>Same rank for ties, <strong>no gap</strong> afterward</td><td>Leaderboards / tiers without gaps</td></tr>
+      <tr><td><code>LAG(col, n)</code></td><td>Offset</td><td>Value from <code>n</code> rows before (default 1)</td><td>Compare a row to the previous one</td></tr>
+      <tr><td><code>LEAD(col, n)</code></td><td>Offset</td><td>Value from <code>n</code> rows after (default 1)</td><td>Compare a row to the next one</td></tr>
+      <tr><td><code>SUM() / AVG() / COUNT() OVER</code></td><td>Aggregate</td><td>A running or group-wide aggregate, on every row</td><td>Running totals, moving averages, "% of group"</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Common mistakes</h2>
+  <table class="plain">
+    <thead><tr><th>Mistake</th><th>What goes wrong</th><th>Fix</th></tr></thead>
+    <tbody>
+      <tr><td>Using a window function in <code>WHERE</code></td><td><code>WHERE</code> runs before window functions are computed — the column doesn't exist yet</td><td>Wrap the query in a subquery or CTE and filter the outer query</td></tr>
+      <tr><td>No <code>ORDER BY</code> inside <code>OVER()</code> on a ranking function</td><td>Every row can tie for rank 1 — the order is undefined</td><td>Always give <code>RANK</code> / <code>ROW_NUMBER</code> / <code>LAG</code> an <code>ORDER BY</code></td></tr>
+      <tr><td>Forgetting <code>PARTITION BY</code></td><td>A "per driver" running total silently becomes one running total for the whole table</td><td>Add <code>PARTITION BY</code> for whatever "per group" means here</td></tr>
+      <tr><td>Treating <code>RANK()</code> and <code>DENSE_RANK()</code> as interchangeable</td><td><code>RANK()</code> leaves gaps after ties; <code>DENSE_RANK()</code> doesn't — different totals</td><td>Pick the one that matches the report you're building</td></tr>
+      <tr><td>Expecting a window function to collapse rows like <code>GROUP BY</code></td><td>It doesn't — every input row survives, with an extra column</td><td>Use a window function precisely when you need the detail rows <em>and</em> the aggregate together</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout">
+    <span class="ic">🎯</span>
+    <div><strong>You're ready</strong> when you can look at any <code>OVER (...)</code> clause and say what resets the calculation (<code>PARTITION BY</code>), what orders it (<code>ORDER BY</code>), and whether the row count changes (it never does).</div>
+  </div>
+
+</div>
+
+<script>
+  const TABS = {
+    rownum: {
+      cols: ['driver', 'date', 'fare'],
+      extraCols: [{ key: 'row_number', label: 'ROW_NUMBER()' }],
+      rows: [
+        { driver: 'Ramesh', date: 'Mon', fare: 450, group: 'a', extra: { row_number: 1 } },
+        { driver: 'Ramesh', date: 'Tue', fare: 320, group: 'a', extra: { row_number: 2 } },
+        { driver: 'Ramesh', date: 'Wed', fare: 320, group: 'a', extra: { row_number: 3 } },
+        { driver: 'Anita',  date: 'Mon', fare: 500, group: 'b', extra: { row_number: 1 } },
+        { driver: 'Anita',  date: 'Tue', fare: 275, group: 'b', extra: { row_number: 2 } }
+      ],
+      legend: true
+    },
+    rank: {
+      cols: ['driver', 'fare'],
+      extraCols: [{ key: 'rank', label: 'RANK()' }, { key: 'dense_rank', label: 'DENSE_RANK()' }],
+      rows: [
+        { driver: 'Anita',  fare: 500, tie: false, extra: { rank: 1, dense_rank: 1 } },
+        { driver: 'Ramesh', fare: 450, tie: false, extra: { rank: 2, dense_rank: 2 } },
+        { driver: 'Ramesh', fare: 320, tie: true,  extra: { rank: 3, dense_rank: 3 } },
+        { driver: 'Ramesh', fare: 320, tie: true,  extra: { rank: 3, dense_rank: 3 } },
+        { driver: 'Anita',  fare: 275, tie: false, extra: { rank: 5, dense_rank: 4 } }
+      ],
+      legend: false
+    },
+    running: {
+      cols: ['driver', 'date', 'fare'],
+      extraCols: [{ key: 'running_total', label: 'SUM() OVER' }],
+      rows: [
+        { driver: 'Ramesh', date: 'Mon', fare: 450, group: 'a', extra: { running_total: 450 } },
+        { driver: 'Ramesh', date: 'Tue', fare: 320, group: 'a', extra: { running_total: 770 } },
+        { driver: 'Ramesh', date: 'Wed', fare: 320, group: 'a', extra: { running_total: 1090 } },
+        { driver: 'Anita',  date: 'Mon', fare: 500, group: 'b', extra: { running_total: 500 } },
+        { driver: 'Anita',  date: 'Tue', fare: 275, group: 'b', extra: { running_total: 775 } }
+      ],
+      legend: true
+    },
+    lag: {
+      cols: ['driver', 'date', 'fare'],
+      extraCols: [{ key: 'prev_fare', label: 'LAG(fare)' }, { key: 'change', label: 'fare - LAG(fare)' }],
+      rows: [
+        { driver: 'Ramesh', date: 'Mon', fare: 450, group: 'a', extra: { prev_fare: null, change: null } },
+        { driver: 'Ramesh', date: 'Tue', fare: 320, group: 'a', extra: { prev_fare: 450, change: -130 } },
+        { driver: 'Ramesh', date: 'Wed', fare: 320, group: 'a', extra: { prev_fare: 320, change: 0 } },
+        { driver: 'Anita',  date: 'Mon', fare: 500, group: 'b', extra: { prev_fare: null, change: null } },
+        { driver: 'Anita',  date: 'Tue', fare: 275, group: 'b', extra: { prev_fare: 500, change: -225 } }
+      ],
+      legend: true
+    }
+  };
+
+  const LABELS = { driver: 'driver', date: 'date', fare: 'fare' };
+
+  function applyTab(key) {
+    const cfg = TABS[key];
+
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === key));
+    document.querySelectorAll('.join-detail').forEach(el => el.classList.toggle('active', el.dataset.tab === key));
+    document.getElementById('legend-wrap').style.display = cfg.legend ? 'flex' : 'none';
+
+    const thead = document.getElementById('result-head');
+    const headCells = cfg.cols.map(c => '<th>' + LABELS[c] + '</th>').join('')
+      + cfg.extraCols.map(c => '<th class="computed">' + c.label + '</th>').join('');
+    thead.innerHTML = '<tr>' + headCells + '</tr>';
+
+    const tbody = document.getElementById('result-body');
+    tbody.innerHTML = '';
+    cfg.rows.forEach((row, i) => {
+      const tr = document.createElement('tr');
+      let cls = 'result-row';
+      if (row.group) cls += ' grp-' + row.group;
+      if (row.tie) cls += ' tie';
+      tr.className = cls;
+
+      const baseCells = cfg.cols.map(c => '<td>' + row[c] + '</td>').join('');
+      const extraCells = cfg.extraCols.map(c => {
+        const v = row.extra[c.key];
+        return '<td class="computed">' + (v === null ? '<span class="badge">NULL</span>' : v) + '</td>';
+      }).join('');
+
+      tr.innerHTML = baseCells + extraCells;
+      tbody.appendChild(tr);
+      setTimeout(() => tr.classList.add('show'), i * 90);
+    });
+  }
+
+  applyTab('rownum');
+</script>
+</body>
+</html>
