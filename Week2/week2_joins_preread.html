@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Week 2 Pre-read — SQL Joins</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --navy:      #0F1B2D;
+    --navy2:     #162236;
+    --navy3:     #1D2E47;
+    --teal:      #00C9A7;
+    --teal-bg:   rgba(0,201,167,0.10);
+    --teal-bd:   rgba(0,201,167,0.28);
+    --white:     #F0F4F8;
+    --white2:    #D8E2EE;
+    --slate:     #8899AA;
+    --slate2:    #607080;
+    --code-bg:   #111D2E;
+    --code-bd:   #243347;
+    --amber:     #FFB347;
+    --amber-bg:  rgba(255,179,71,0.10);
+    --amber-bd:  rgba(255,179,71,0.28);
+  }
+
+  code, pre { font-variant-ligatures: none; }
+
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background: var(--navy);
+    color: var(--white);
+    font-size: 15px;
+    line-height: 1.7;
+  }
+
+  .page { max-width: 760px; margin: 0 auto; padding: 48px 24px 80px; }
+
+  .eyebrow {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    color: var(--teal);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  h1 {
+    font-size: 30px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    margin-bottom: 14px;
+  }
+
+  h2 {
+    font-size: 19px;
+    font-weight: 600;
+    margin: 40px 0 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  h2::before {
+    content: '';
+    width: 3px; height: 18px;
+    background: var(--teal);
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+
+  p { color: var(--white2); margin-bottom: 12px; }
+  strong { color: var(--white); font-weight: 500; }
+
+  code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12.5px;
+    color: var(--teal);
+    background: var(--teal-bg);
+    padding: 1px 6px;
+    border-radius: 4px;
+  }
+
+  .intro { font-size: 16px; padding-bottom: 24px; border-bottom: 1px solid var(--code-bd); margin-bottom: 8px; }
+
+  /* ── Callout ── */
+  .callout {
+    border-radius: 8px;
+    padding: 14px 18px;
+    margin: 18px 0;
+    font-size: 14px;
+    display: flex;
+    gap: 12px;
+    background: var(--teal-bg);
+    border: 1px solid var(--teal-bd);
+    color: var(--white2);
+  }
+  .callout span.ic { flex-shrink: 0; }
+  .callout strong { color: var(--white); }
+
+  /* ── Tabs ── */
+  .tabs { display: flex; gap: 8px; flex-wrap: wrap; margin: 20px 0 22px; }
+  .tab-btn {
+    font-family: inherit;
+    font-size: 13.5px;
+    font-weight: 500;
+    padding: 9px 16px;
+    border-radius: 8px;
+    border: 1px solid var(--code-bd);
+    background: var(--navy2);
+    color: var(--white2);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .tab-btn:hover { border-color: var(--teal); color: var(--white); }
+  .tab-btn.active { background: var(--teal-bg); border-color: var(--teal); color: var(--teal); }
+
+  /* ── Widget shell ── */
+  .widget {
+    background: var(--navy2);
+    border: 1px solid var(--code-bd);
+    border-radius: 12px;
+    padding: 24px;
+  }
+
+  .join-detail { display: none; }
+  .join-detail.active { display: block; }
+  .join-def { font-size: 15px; color: var(--white); margin-bottom: 16px; }
+
+  /* ── Venn ── */
+  .venn-wrap { display: flex; justify-content: center; margin-bottom: 8px; }
+  .venn-wrap svg { width: 220px; height: auto; }
+  .hl { transition: opacity 0.4s ease; }
+  .legend { display: flex; gap: 18px; justify-content: center; flex-wrap: wrap; font-size: 12px; color: var(--slate); margin-bottom: 22px; }
+  .legend-item { display: flex; align-items: center; gap: 6px; }
+  .legend-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+
+  /* ── Source tables ── */
+  .src-tables { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 20px; }
+  .src-table-card { flex: 1; min-width: 200px; }
+  .src-table-title { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--slate); margin-bottom: 8px; }
+  .src-table { width: 100%; border-collapse: collapse; font-size: 13.5px; border: 1px solid var(--code-bd); border-radius: 8px; overflow: hidden; }
+  .src-table td { padding: 8px 12px; border-bottom: 1px solid var(--code-bd); color: var(--white2); }
+  .src-table tr:last-child td { border-bottom: none; }
+  .src-row { transition: opacity 0.3s ease, background 0.3s ease, border-left-color 0.3s ease; border-left: 3px solid transparent; }
+  .src-row.matched { background: var(--teal-bg); border-left-color: var(--teal); }
+  .src-row.gap { background: var(--amber-bg); border-left-color: var(--amber); }
+  .src-row.excluded { opacity: 0.32; }
+
+  /* ── Result table ── */
+  .result-label { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--slate); margin: 22px 0 8px; }
+  table.result { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  table.result thead tr { border-bottom: 1px solid var(--teal-bd); }
+  table.result th { padding: 8px 12px; text-align: left; font-size: 11px; font-weight: 600; color: var(--teal); letter-spacing: 0.06em; text-transform: uppercase; }
+  table.result td { padding: 9px 12px; border-bottom: 1px solid var(--code-bd); color: var(--white2); }
+  .result-row { opacity: 0; transform: translateY(6px); transition: opacity 0.3s ease, transform 0.3s ease; }
+  .result-row.show { opacity: 1; transform: translateY(0); }
+  .badge { display: inline-block; font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--amber); background: var(--amber-bg); border: 1px solid var(--amber-bd); padding: 1px 7px; border-radius: 4px; }
+
+  /* ── Code block ── */
+  .code-wrap { background: var(--code-bg); border: 1px solid var(--code-bd); border-radius: 8px; margin-top: 16px; overflow: hidden; }
+  pre { font-family: 'JetBrains Mono', monospace; font-size: 12.5px; line-height: 1.7; color: var(--white); padding: 14px 16px; overflow-x: auto; }
+  .kw { color: #FF79C6; }
+  .fn { color: #50FA7B; }
+
+  /* ── Plain tables (summary / mistakes) ── */
+  table.plain { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 13.5px; }
+  table.plain thead tr { border-bottom: 1px solid var(--teal-bd); }
+  table.plain th { padding: 10px 14px; text-align: left; font-size: 11px; font-weight: 600; color: var(--teal); letter-spacing: 0.06em; text-transform: uppercase; }
+  table.plain td { padding: 10px 14px; border-bottom: 1px solid var(--code-bd); color: var(--white2); vertical-align: top; }
+  table.plain tr:last-child td { border-bottom: none; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="eyebrow">Week 2 · Pre-read</div>
+  <h1>SQL Joins</h1>
+  <p class="intro">
+    Once your data is split across tables, most real questions need more than one table at a time.
+    A <strong>join</strong> combines rows from two tables based on a matching column. There are only
+    four kinds — pick a tab below and watch what each one keeps.
+  </p>
+
+  <div class="tabs">
+    <button class="tab-btn active" data-join="inner" onclick="applyJoin('inner')">INNER JOIN</button>
+    <button class="tab-btn" data-join="left" onclick="applyJoin('left')">LEFT JOIN</button>
+    <button class="tab-btn" data-join="right" onclick="applyJoin('right')">RIGHT JOIN</button>
+    <button class="tab-btn" data-join="full" onclick="applyJoin('full')">FULL OUTER JOIN</button>
+  </div>
+
+  <div class="widget">
+
+    <div class="venn-wrap">
+      <svg viewBox="0 0 130 80">
+        <defs>
+          <clipPath id="clipA"><circle cx="40" cy="38" r="32"/></clipPath>
+          <clipPath id="clipB"><circle cx="90" cy="38" r="32"/></clipPath>
+        </defs>
+        <circle cx="40" cy="38" r="32" fill="none" stroke="#607080" stroke-width="1"/>
+        <circle cx="90" cy="38" r="32" fill="none" stroke="#607080" stroke-width="1"/>
+        <circle id="hl-left" class="hl" cx="40" cy="38" r="32" fill="#00C9A7" fill-opacity="0.5" style="opacity:1"/>
+        <circle id="hl-right" class="hl" cx="90" cy="38" r="32" fill="#00C9A7" fill-opacity="0.5" style="opacity:0"/>
+        <circle id="hl-lens" class="hl" cx="40" cy="38" r="32" clip-path="url(#clipB)" fill="#00C9A7" fill-opacity="0.85" style="opacity:1"/>
+        <text x="40" y="76" text-anchor="middle" font-size="7" fill="#8899AA">Drivers</text>
+        <text x="90" y="76" text-anchor="middle" font-size="7" fill="#8899AA">Vehicle Types</text>
+      </svg>
+    </div>
+
+    <div class="legend">
+      <span class="legend-item"><span class="legend-dot" style="background:var(--teal)"></span>matched</span>
+      <span class="legend-item"><span class="legend-dot" style="background:var(--amber)"></span>kept, no match (NULL)</span>
+      <span class="legend-item"><span class="legend-dot" style="background:var(--slate2)"></span>not in this result</span>
+    </div>
+
+    <div class="src-tables">
+      <div class="src-table-card">
+        <div class="src-table-title">drivers</div>
+        <table class="src-table">
+          <tbody>
+            <tr id="d1" class="src-row matched"><td>Ramesh</td><td>Bike</td></tr>
+            <tr id="d2" class="src-row matched"><td>Anita</td><td>Bike</td></tr>
+            <tr id="d3" class="src-row matched"><td>Hari</td><td>Car</td></tr>
+            <tr id="d4" class="src-row excluded"><td>Maya</td><td>—</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="src-table-card">
+        <div class="src-table-title">vehicle_types</div>
+        <table class="src-table">
+          <tbody>
+            <tr id="v1" class="src-row matched"><td>Bike</td></tr>
+            <tr id="v2" class="src-row matched"><td>Car</td></tr>
+            <tr id="v3" class="src-row excluded"><td>Electric</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="join-detail active" data-join="inner">
+      <p class="join-def">Only rows that match on <strong>both</strong> sides. Maya (no vehicle type) and Electric (no driver) are both left out.</p>
+      <div class="code-wrap"><pre><span class="kw">SELECT</span> d.name, vt.type_name
+<span class="kw">FROM</span> drivers d
+<span class="kw">INNER JOIN</span> vehicle_types vt <span class="kw">ON</span> d.vehicle_type_id = vt.vehicle_type_id;</pre></div>
+    </div>
+    <div class="join-detail" data-join="left">
+      <p class="join-def">Every row from <strong>drivers</strong> (the left table). Maya still appears, with <code>NULL</code> where a matching vehicle type would go.</p>
+      <div class="code-wrap"><pre><span class="kw">SELECT</span> d.name, vt.type_name
+<span class="kw">FROM</span> drivers d
+<span class="kw">LEFT JOIN</span> vehicle_types vt <span class="kw">ON</span> d.vehicle_type_id = vt.vehicle_type_id;</pre></div>
+    </div>
+    <div class="join-detail" data-join="right">
+      <p class="join-def">Every row from <strong>vehicle_types</strong> (the right table). Electric still appears, with <code>NULL</code> where a matching driver would go.</p>
+      <div class="code-wrap"><pre><span class="kw">SELECT</span> d.name, vt.type_name
+<span class="kw">FROM</span> drivers d
+<span class="kw">RIGHT JOIN</span> vehicle_types vt <span class="kw">ON</span> d.vehicle_type_id = vt.vehicle_type_id;</pre></div>
+    </div>
+    <div class="join-detail" data-join="full">
+      <p class="join-def">Every row from <strong>both</strong> tables. Maya and Electric both appear, each with <code>NULL</code> on the side that has no match.</p>
+      <div class="code-wrap"><pre><span class="kw">SELECT</span> d.name, vt.type_name
+<span class="kw">FROM</span> drivers d
+<span class="kw">FULL OUTER JOIN</span> vehicle_types vt <span class="kw">ON</span> d.vehicle_type_id = vt.vehicle_type_id;</pre></div>
+    </div>
+
+    <div class="result-label">Result</div>
+    <table class="result">
+      <thead><tr><th>driver</th><th>vehicle type</th></tr></thead>
+      <tbody id="result-body"></tbody>
+    </table>
+
+  </div>
+
+  <h2>The four joins at a glance</h2>
+  <table class="plain">
+    <thead><tr><th>Join</th><th>Keeps</th><th>Use it when</th></tr></thead>
+    <tbody>
+      <tr><td><code>INNER JOIN</code></td><td>Rows matched on both sides only</td><td>Every row is guaranteed to have a match on the other side</td></tr>
+      <tr><td><code>LEFT JOIN</code></td><td>Every row from the left table</td><td>You want "everything, plus related data if it exists" — or to find rows with no match</td></tr>
+      <tr><td><code>RIGHT JOIN</code></td><td>Every row from the right table</td><td>Rare — same as a LEFT JOIN with the tables swapped</td></tr>
+      <tr><td><code>FULL OUTER JOIN</code></td><td>Every row from both tables</td><td>You need gaps on both sides visible at once</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Common mistakes</h2>
+  <table class="plain">
+    <thead><tr><th>Mistake</th><th>What goes wrong</th><th>Fix</th></tr></thead>
+    <tbody>
+      <tr><td>No <code>ON</code> condition (comma-separated tables)</td><td>Every row pairs with every row — a cartesian product</td><td>Always write an explicit <code>JOIN ... ON</code></td></tr>
+      <tr><td>Joining the same table twice, same alias</td><td><code>"table name specified more than once"</code> error</td><td>Give each join its own alias, e.g. <code>pu</code> / <code>dr</code></td></tr>
+      <tr><td>Filtering the outer side in <code>WHERE</code></td><td>Silently turns a LEFT JOIN back into an INNER JOIN</td><td>Put the condition in <code>ON</code> instead</td></tr>
+      <tr><td>Joining two "many" tables to one parent</td><td>Row counts multiply, inflating <code>SUM</code>/<code>COUNT</code></td><td>Aggregate each branch separately, then combine</td></tr>
+      <tr><td>Joining on a text column, not the key</td><td>Casing/whitespace differences silently drop matches</td><td>Join on the id column; clean text once at insert time</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout">
+    <span class="ic">🎯</span>
+    <div><strong>You're ready</strong> when, for any join, you can say which rows it keeps, which it drops, and where the <code>NULL</code>s come from — before running it.</div>
+  </div>
+
+</div>
+
+<script>
+  const JOINS = {
+    inner: {
+      driverStatus: { d1:'matched', d2:'matched', d3:'matched', d4:'excluded' },
+      typeStatus:   { v1:'matched', v2:'matched', v3:'excluded' },
+      rows: [['Ramesh','Bike'], ['Anita','Bike'], ['Hari','Car']],
+      venn: 'lens'
+    },
+    left: {
+      driverStatus: { d1:'matched', d2:'matched', d3:'matched', d4:'gap' },
+      typeStatus:   { v1:'matched', v2:'matched', v3:'excluded' },
+      rows: [['Ramesh','Bike'], ['Anita','Bike'], ['Hari','Car'], ['Maya', null]],
+      venn: 'left'
+    },
+    right: {
+      driverStatus: { d1:'matched', d2:'matched', d3:'matched', d4:'excluded' },
+      typeStatus:   { v1:'matched', v2:'matched', v3:'gap' },
+      rows: [['Ramesh','Bike'], ['Anita','Bike'], ['Hari','Car'], [null, 'Electric']],
+      venn: 'right'
+    },
+    full: {
+      driverStatus: { d1:'matched', d2:'matched', d3:'matched', d4:'gap' },
+      typeStatus:   { v1:'matched', v2:'matched', v3:'gap' },
+      rows: [['Ramesh','Bike'], ['Anita','Bike'], ['Hari','Car'], ['Maya', null], [null, 'Electric']],
+      venn: 'full'
+    }
+  };
+
+  function applyJoin(key) {
+    const cfg = JOINS[key];
+
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.join === key));
+    document.querySelectorAll('.join-detail').forEach(el => el.classList.toggle('active', el.dataset.join === key));
+
+    Object.entries(cfg.driverStatus).forEach(([id, status]) => {
+      document.getElementById(id).className = 'src-row ' + status;
+    });
+    Object.entries(cfg.typeStatus).forEach(([id, status]) => {
+      document.getElementById(id).className = 'src-row ' + status;
+    });
+
+    document.getElementById('hl-left').style.opacity  = (cfg.venn === 'left'  || cfg.venn === 'full') ? '1' : '0';
+    document.getElementById('hl-right').style.opacity = (cfg.venn === 'right' || cfg.venn === 'full') ? '1' : '0';
+    document.getElementById('hl-lens').style.opacity  = (cfg.venn === 'lens') ? '1' : '0';
+
+    const tbody = document.getElementById('result-body');
+    tbody.innerHTML = '';
+    cfg.rows.forEach(([driver, type], i) => {
+      const tr = document.createElement('tr');
+      tr.className = 'result-row';
+      const driverCell = driver === null ? '<span class="badge">NULL</span>' : driver;
+      const typeCell = type === null ? '<span class="badge">NULL</span>' : type;
+      tr.innerHTML = '<td>' + driverCell + '</td><td>' + typeCell + '</td>';
+      tbody.appendChild(tr);
+      setTimeout(() => tr.classList.add('show'), i * 90);
+    });
+  }
+
+  applyJoin('inner');
+</script>
+</body>
+</html>
