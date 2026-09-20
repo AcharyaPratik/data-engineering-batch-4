@@ -145,8 +145,8 @@ SELECT
 	fare_amount,
 	ride_distance_km,
 	ride_status,
-	NULLIF(r.requested_at, '')::timestamp requested_at,
-	NULLIF(r.completed_at, '')::timestamp completed_at,
+	r.requested_at requested_at,
+	r.completed_at completed_at,
 	rating,
 	(
 	SELECT payment_method_id
