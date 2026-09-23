@@ -1,8 +1,12 @@
+-- Active: 1752501731428@@localhost@5432@ride_share
 DROP TABLE IF EXISTS trips;
 DROP TABLE IF EXISTS drivers;
 DROP TABLE IF EXISTS passengers;
 DROP TABLE IF EXISTS locations;	
 DROP TABLE IF EXISTS payment_methods ;
+
+
+drop view completed_trips_detail_view;
 
 -- Cities that appear as pickup or dropoff locations
 CREATE TABLE locations (
