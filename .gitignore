@@ -1,3 +1,7 @@
 .venv/
 .claude/
+<<<<<<< HEAD
 .env/
+=======
+**/.env
+>>>>>>> 2e906de (Updated gitignore)
