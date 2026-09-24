@@ -123,6 +123,7 @@ def get_test_batches():
 
 def main():
     conn = psycopg2.connect(**DB_CONFIG)
+    conn.autocommit = False 
     good_batch, bad_batch = get_test_batches()
 
     count_before = None
