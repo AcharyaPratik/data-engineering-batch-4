@@ -69,6 +69,8 @@ This behavior is important for finance operations because partial updates could 
 incorrect revenue calculations, driver payouts, invoices, and reports. 
 Atomic transactions guarantee that either all fare corrections are applied or none are applied.
  */
+
+
 -- Q2 — FK delete-rule audit (Intermediate · introspection + design)
 -- \d trips or information_schema query -> paste actual ON DELETE rules found
 -- Your own driver + trip -> DELETE driver -> verify result
@@ -210,6 +212,8 @@ A safer design would be ON DELETE RESTRICT or a soft-delete approach using a del
 This preserves historical trip data while preventing the driver from appearing in normal
 application queries.
  */
+
+
 -- Q3 — Anti-join shootout: drivers with no trips (Intermediate–Advanced · EXPLAIN ANALYZE)
 -- (a) NOT IN, (b) LEFT JOIN ... IS NULL, (c) NOT EXISTS -- EXPLAIN ANALYZE all three, paste plans
 -- Comment: plan shape of each, which was fastest
@@ -336,6 +340,24 @@ WHERE
 );
 
 /*
+trips.payment_method_id contains 1 NULL value.
+Although both NOT IN and NOT EXISTS returned 0 rows on this dataset, NOT IN is still unsafe 
+when the subquery can return NULL values.
+
+For example:
+x NOT IN (1, 2, NULL)
+is evaluated as:
+x <> 1
+AND x <> 2
+AND x <> NULL
+
+The comparison x <> NULL does not return TRUE or FALSE. It returns UNKNOWN. Because the entire 
+expression contains UNKNOWN, the WHERE clause does not evaluate to TRUE, so rows are filtered out.
+
+NOT EXISTS does not have this problem because it checks for the existence of matching rows 
+rather than comparing values against a list that may contain NULLs. Therefore, NOT EXISTS is 
+the safer and recommended solution.
+
 The NOT IN query used a sequential scan with a materialized subquery. The LEFT JOIN ... IS NULL 
 query used a hash right join and scanned the trips table. The NOT EXISTS query was optimized into 
 a nested loop anti join and used the idx_trips_driver_id index.
@@ -344,6 +366,8 @@ On my dataset, NOT EXISTS was the fastest with an execution time of 0.271 ms. Th
 took 176.109 ms, while NOT IN took 307.593 ms. Execution times may vary depending on indexes, 
 statistics, caching, and data size.
 */
+
+
 -- Q4 — Index the fix (Intermediate · CREATE INDEX)
 -- EXPLAIN ANALYZE baseline on corrected Q3 query, CREATE INDEX on payment_method_id, re-run
 -- Paste both plans
@@ -535,7 +559,7 @@ FROM
 		status = 'completed'
 	GROUP BY
 		requested_at::date
-)
+) AS daily_series
 ORDER BY
 	trip_date;
 
