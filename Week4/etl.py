@@ -254,25 +254,77 @@ def load_dim_promo_code(conn, promo_code_data):
         raise
 
 
+def extract_trips(conn):
+    extract_trip_sql = """
+      SELECT
+        t.trip_id,
+        t.driver_id,
+        t.passenger_id,
+        t.pickup_location_id,
+        t.dropoff_location_id,
+        t.payment_method_id,
+        t.promo_code_id,
+        t.base_fare,
+        t.tip_amount,
+        t.discount_amount,
+        t.surge_multiplier,
+        t.distance_km,
+        t.status,
+        t.requested_at,
+        t.completed_at,
+        t.driver_rating,
+        t.passenger_rating,
+        tc.cancelled_by          -- from trip_cancellations (NULL for non-cancelled)
+    FROM  trips t
+    LEFT JOIN trip_cancellations tc ON t.trip_id = tc.trip_id
+    ORDER BY t.requested_at
+        """
+    return extract(conn,extract_trip_sql)
+
+
+def load_lookup_dim(conn):
+    logger.info("Loading lookup table into memmory")
+    lookup = {}
+    with conn.cursor() as curr:
+        curr.execute("SELECT driver_id, driver_key FROM dim_driver")
+        lookup["driver"] = {r[0]:r[1] for r in curr.fetchall()}
+
+        curr.execute("SELECT passenger_id, passenger_key FROM dim_passenger")
+        lookup["passenger"] = {r[0]:r[1] for r in curr.fetchall()}
+
+        curr.execute("SELECT location_id, location_key FROM dim_location")
+        lookup["location"] = {r[0]:r[1] for r in curr.fetchall()}
+
+        curr.execute("SELECT payment_method_id, payment_method_key FROM dim_payment_method")
+        lookup["payment_method"] = {r[0]:r[1] for r in curr.fetchall()}
+
+        curr.execute("SELECT promo_code_id, promo_code_key FROM dim_promo_code")
+        lookup["promo_code"] = {r[0]:r[1] for r in curr.fetchall()}
+
+        curr.execute("SELECT date_key FROM dim_date")
+        lookup["date"] = {r[0]: True for r in curr.fetchall()}
+    return lookup
 # TODO: research on arg vs kwarg
 def main():
     src_conn = psycopg2.connect(**SOURCE_DB_CONFIG)
     dst_conn = psycopg2.connect(**DEST_DB_CONFIG)
 
-    driver_data = extract_driver(src_conn)
-    load_dim_driver(dst_conn, driver_data)
+    # driver_data = extract_driver(src_conn)
+    # load_dim_driver(dst_conn, driver_data)
 
-    passenger_data = extract_passenger(src_conn)
-    load_dim_passenger(dst_conn, passenger_data)
+    # passenger_data = extract_passenger(src_conn)
+    # load_dim_passenger(dst_conn, passenger_data)
 
-    location_data = extract_location(src_conn)
-    load_dim_location(dst_conn, location_data)
+    # location_data = extract_location(src_conn)
+    # load_dim_location(dst_conn, location_data)
 
-    payment_method_data = extract_payment_method(src_conn)
-    load_dim_payment_method(dst_conn, payment_method_data)
-    
-    promo_code_data = extract_promo_code(src_conn)
-    load_dim_promo_code(dst_conn, promo_code_data)
+    # payment_method_data = extract_payment_method(src_conn)
+    # load_dim_payment_method(dst_conn, payment_method_data)
+
+    # promo_code_data = extract_promo_code(src_conn)
+    # load_dim_promo_code(dst_conn, promo_code_data)
+
+    trip_data = extract_trips(src_conn)
 
 if __name__ == '__main__':
     main()
