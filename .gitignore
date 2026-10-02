@@ -1,11 +1,7 @@
 .venv/
 .claude/
-<<<<<<< HEAD
-<<<<<<< HEAD
 .env/
-=======
 **/.env
->>>>>>> 2e906de (Updated gitignore)
-=======
 .env
->>>>>>> 8fb50efac81352657d48c8ab87c5d7dc5887a57f
+.env
+__pycache__
