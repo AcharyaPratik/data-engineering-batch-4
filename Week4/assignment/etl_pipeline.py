@@ -1,29 +1,7 @@
-"""
-etl_pipeline.py
----------------
-Week 4 Assignment — Python Exercise
-
-The class ETL (../etl.py) loads ride_prod -> ride_warehouse, but nothing checks
-that the warehouse actually matches the source, and fact_trips is missing the
-columns Product needs (trip status, time of day, who cancelled). This file is the
-same pipeline with those gaps filled in.
-
-You complete two pieces (search for "TODO"):
-
-  P1  transform_trip()  — populate the new fact columns: time_key, trip_status, cancelled_by
-  P2  reconcile()       — prove source and warehouse agree, fail loudly if they don't
-
-Prerequisite: run your warehouse_migration.sql first. The loads below insert into
-time_key / trip_status / cancelled_by and rely on UNIQUE natural keys on every
-dimension — they will error until the migration is applied.
-
-Run from Week4/assignment/:
-    python etl_pipeline.py
-"""
-
 import logging
 import os
 import sys
+from decimal import Decimal, ROUND_HALF_UP
 
 import psycopg2
 from psycopg2 import sql
@@ -48,11 +26,11 @@ SOURCE_DB_CONFIG = dict(
 )
 
 DEST_DB_CONFIG = dict(
-    host=    os.getenv("DEST_DB_HOST"),
-    port=    os.getenv("DEST_DB_PORT"),
-    dbname=  os.getenv("DEST_DB_NAME"),
-    user=    os.getenv("DEST_DB_USER"),
-    password=os.getenv("DEST_DB_PASSWORD")
+    host=    os.getenv("DB_HOST"),
+    port=    os.getenv("DB_PORT"),
+    dbname=  os.getenv("DB_NAME"),
+    user=    os.getenv("DB_USER"),
+    password=os.getenv("DB_PASSWORD")
 )
 
 
@@ -276,10 +254,24 @@ def transform_trip(trip_data, lookups):
             skipped += 1
             continue
 
-        # TODO (P1): compute time_key — HHMM of requested_at, minutes rounded DOWN
-        # to the 15-minute bucket (14:37 -> 1430, 09:05 -> 900, 00:59 -> 45).
-        # Skip + warn (like date_key above) if it isn't in lookups["time"].
-        time_key = None
+        # Calculate HHMM, rounding minutes down to the nearest 15-minute bucket.
+        # Examples:
+        # 14:37 -> 1430
+        # 09:05 -> 900
+        # 00:59 -> 45
+        requested_at = row["requested_at"]
+
+        time_key = (
+            requested_at.hour * 100
+            + (requested_at.minute // 15) * 15
+        )
+
+        if time_key not in lookups["time"]:
+            logger.warning(
+                f"trip {trip_id}: time_key {time_key} not in dim_time — skipped"
+            )
+            skipped += 1
+            continue
 
         driver_key = lookups["driver"].get(row["driver_id"])
         if driver_key is None:
@@ -326,7 +318,15 @@ def transform_trip(trip_data, lookups):
         tip_amount = row["tip_amount"] or 0
         surge_multiplier = row["surge_multiplier"] or 0
         discount_amount = row["discount_amount"] or 0
-        fare_amount = round(base_fare * surge_multiplier + tip_amount - discount_amount, 2)
+        fare_amount = (
+            Decimal(str(base_fare))
+            * Decimal(str(surge_multiplier))
+            + Decimal(str(tip_amount))
+            - Decimal(str(discount_amount))
+        ).quantize(
+            Decimal("0.01"),
+            rounding=ROUND_HALF_UP
+        )
 
         duration_minutes = None
         if row["status"] == "completed" and row["completed_at"]:
@@ -343,8 +343,8 @@ def transform_trip(trip_data, lookups):
             "dropoff_location_key": dropoff_location_key,
             "payment_method_key":   payment_method_key,
             "promo_code_key":       promo_code_key,
-            "trip_status":          None,   # TODO (P1)
-            "cancelled_by":         None,   # TODO (P1)
+            "trip_status":          row["status"],
+            "cancelled_by":         row["cancelled_by"],
             "base_fare":            base_fare,
             "tip_amount":           tip_amount,
             "discount_amount":      discount_amount,
@@ -412,23 +412,112 @@ def load_fact_trips(conn, fact_data):
 
 def reconcile(src_conn, dst_conn):
     """
-    Compare ride_prod against ride_warehouse and log one PASS/FAIL line per check.
-
-    Required checks:
-      1. Dimension row counts — drivers vs dim_driver, passengers vs dim_passenger
-         (a count mismatch here means the Q1 duplicates are still there)
-      2. Trip count per status — trips.status vs fact_trips.trip_status,
-         every status must match
-      3. Completed revenue — SUM(fare_amount) from the source v_trips view for
-         completed trips vs SUM(fare_amount) in fact_trips for completed trips,
-         must match to the cent
-
-    Returns:
-        True if every check passed, False otherwise. Don't raise on a mismatch —
-        log it with both numbers so whoever reads the log can see how far off it is.
+    Compare ride_prod against ride_warehouse and log one PASS/FAIL line per
+    required reconciliation check.
     """
-    # TODO (P2)
-    raise NotImplementedError("P2: implement reconcile()")
+
+    all_ok = True
+
+    # Check 1: source and warehouse dimension counts
+    with src_conn.cursor() as src_cur, dst_conn.cursor() as dst_cur:
+        src_cur.execute("SELECT COUNT(*) FROM drivers")
+        source_driver_count = src_cur.fetchone()[0]
+
+        dst_cur.execute("SELECT COUNT(*) FROM dim_driver")
+        warehouse_driver_count = dst_cur.fetchone()[0]
+
+        src_cur.execute("SELECT COUNT(*) FROM passengers")
+        source_passenger_count = src_cur.fetchone()[0]
+
+        dst_cur.execute("SELECT COUNT(*) FROM dim_passenger")
+        warehouse_passenger_count = dst_cur.fetchone()[0]
+
+    dimensions_ok = (
+        source_driver_count == warehouse_driver_count
+        and source_passenger_count == warehouse_passenger_count
+    )
+
+    logger.info(
+        "CHECK 1 - dimensions: %s "
+        "(drivers source=%s warehouse=%s; "
+        "passengers source=%s warehouse=%s)",
+        "PASS" if dimensions_ok else "FAIL",
+        source_driver_count,
+        warehouse_driver_count,
+        source_passenger_count,
+        warehouse_passenger_count,
+    )
+
+    all_ok = all_ok and dimensions_ok
+
+    # Check 2: trip count per status
+    with src_conn.cursor() as src_cur, dst_conn.cursor() as dst_cur:
+        src_cur.execute("""
+            SELECT status, COUNT(*)
+            FROM trips
+            GROUP BY status
+            ORDER BY status
+        """)
+        source_status_counts = dict(src_cur.fetchall())
+
+        dst_cur.execute("""
+            SELECT trip_status, COUNT(*)
+            FROM fact_trips
+            GROUP BY trip_status
+            ORDER BY trip_status
+        """)
+        warehouse_status_counts = dict(dst_cur.fetchall())
+
+    status_ok = source_status_counts == warehouse_status_counts
+
+    logger.info(
+        "CHECK 2 - trip counts by status: %s "
+        "(source=%s warehouse=%s)",
+        "PASS" if status_ok else "FAIL",
+        source_status_counts,
+        warehouse_status_counts,
+    )
+
+    all_ok = all_ok and status_ok
+
+    # Check 3: completed revenue
+    with src_conn.cursor() as src_cur, dst_conn.cursor() as dst_cur:
+        src_cur.execute("""
+            SELECT COALESCE(SUM(fare_amount), 0)
+            FROM v_trips
+            WHERE status = 'completed'
+        """)
+        source_revenue = src_cur.fetchone()[0]
+
+        dst_cur.execute("""
+            SELECT COALESCE(SUM(fare_amount), 0)
+            FROM fact_trips
+            WHERE trip_status = 'completed'
+        """)
+        warehouse_revenue = dst_cur.fetchone()[0]
+
+    source_revenue = Decimal(str(source_revenue)).quantize(
+        Decimal("0.01"),
+        rounding=ROUND_HALF_UP
+    )
+    warehouse_revenue = Decimal(str(warehouse_revenue)).quantize(
+        Decimal("0.01"),
+        rounding=ROUND_HALF_UP
+    )
+
+    revenue_ok = source_revenue == warehouse_revenue
+
+    logger.info(
+        "CHECK 3 - completed revenue: %s "
+        "(source=%s warehouse=%s)",
+        "PASS" if revenue_ok else "FAIL",
+        source_revenue,
+        warehouse_revenue,
+    )
+
+    all_ok = all_ok and revenue_ok
+
+    return all_ok
 
 
 # ─────────────────────────────────────────────────────────────────────────────
